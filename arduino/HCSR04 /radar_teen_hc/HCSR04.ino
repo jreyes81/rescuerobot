@@ -26,13 +26,13 @@
 #include <ros.h>
 #include <ros/time.h>
 #include <sensor_msgs/Range.h>
-#include <std_msgs/Float32.h>
+//#include <std_msgs/Float32.h>
 
 
 ros::NodeHandle nh;
 
 sensor_msgs::Range range_msg; // This creates the message type "Range"
-std_msgs::Float32 str_msg; // This creates the message type "Float 32"
+//std_msgs::Float32 str_msg; // This creates the message type "Float 32"
 ros::Publisher pub_range( "/HerculesUltrasound_Range", &range_msg);
 //ros::Publisher servopos("/HerculesUltrasound_Position", &str_msg); 
  
