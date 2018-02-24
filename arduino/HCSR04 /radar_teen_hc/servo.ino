@@ -60,7 +60,7 @@ void loop() {
   
   temp = analogRead(servofeed);
 
-  servo_pos = ((0.3956*temp)-75.165);
+  servo_pos = ((0.3956*temp)-75.165); // Converts feedback counts to angles.
 
   
   str_msg.data = servo_pos; // Servo position publishing
