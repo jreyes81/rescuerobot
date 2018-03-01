@@ -11,9 +11,6 @@
 # Raytheon Radar Guided Rescue robot
 # Cal State LA
 
-# Will need to use switch cases. Since python doesn't have this feature, we will have to
-# use dictionary mappings.
-
 import math
 import sys
 import rospy
