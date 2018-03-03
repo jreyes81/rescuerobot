@@ -31,7 +31,7 @@ class Navigation(object):
         self.twist = Twist()
         self.twist.linear.x = 0
         self.twist.angular.z = 0
-	self.stopbutton = stop_button() # Importing stop value from pygame_radar.py's stop_button funcion
+	    self.stopbutton = stop_button() # Importing stop value from pygame_radar.py's stop_button funcion
 
         # Subscriber
         self.ran_sub = rospy.Subscriber("HerculesUltrasound_Range", Range, self.distcallback) #Used to be Float32. [Float 32, callback])
@@ -59,11 +59,11 @@ class Navigation(object):
             self.twist.linear.x = 0
             self.twist.angular.z = 20
             self.cmd_pub.publish(self.twist)
-	
+
         if self.stop = True: #if statement to make robot stop
             self.twist.linear.x = 0
             self.twist.angular.z = 0
-            self.cmd_pub.publish(self.twist) 
+            self.cmd_pub.publish(self.twist)
 
 
 if __name__ == '__main__':
