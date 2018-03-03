@@ -35,6 +35,7 @@ class RadarDisplay():
         self.sy = 1000 # length of screen
         self.count = 0
         self.real_obj_dist = 0
+	self.stop = 0 # Value to make robot stop!
         self.estimated_obj_dist = 0
         self.servo_pos = 0
         self.angle = 0
@@ -252,11 +253,13 @@ class RadarDisplay():
         y_pos = self.sy * 0.035
         x_length = self.sx * 0.150
         y_width = self.sy * 0.050
+	return stop = self.stop # Value of 0. Temp value for stop variable
 
         if x_pos+x_length > mouse[0] > x_pos and y_pos+y_width > mouse[1] > y_width: # Hovering over box
             pygame.draw.rect(pygame.display.get_surface(),self.brightred,(x_pos,y_pos,x_length,y_width))
             if click[0] == 1:
                 print('Robot has stopped moving')
+		return stop = 1 # Value to make robot stop
                 # Inserting function that pubslishes command to motors to stop using rospy.Publisher
         else:
             pygame.draw.rect(pygame.display.get_surface(),self.red,(x_pos,y_pos,x_length,y_width))
