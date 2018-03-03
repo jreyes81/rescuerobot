@@ -50,17 +50,20 @@ class Navigation(object):
     def move(self): # Function to make robot move
         self.real_obj_dist = math.fabs(self.real_obj_dist) # Returns the absolute value of distance
 
-        if ((self.real_obj_dist < 100) & (self.real_obj_dist > 0) & (self.stopbutton == 0)):
+        if ((self.real_obj_dist < 100) & (self.real_obj_dist > 0) & (self.stopbutton == False)):
             self.twist.linear.x = 20 # Robot moves forward at 20% speed
             self.twist.angular.z = 0 # Robot does not rotate
             self.cmd_pub.publish(self.twist) # Publishes
 
-        if self.real_obj_dist > 100:
+        if ((self.real_obj_dist > 100) & (self.stopbutton == False)):
             self.twist.linear.x = 0
             self.twist.angular.z = 20
             self.cmd_pub.publish(self.twist)
 	
-	##if Put if statement here to make robot stop! 
+        if self.stop = True: #if statement to make robot stop
+            self.twist.linear.x = 0
+            self.twist.angular.z = 0
+            self.cmd_pub.publish(self.twist) 
 
 
 if __name__ == '__main__':
