@@ -37,14 +37,18 @@ void wheel_cb( const geometry_msgs::Twist& cmd_msg){ // message name cmd_msg
   float linear = cmd_msg.linear.x;
   float angular = cmd_msg.angular.z;
 
-  if (cmd_msg.linear.x == 20 && cmd_msg.angular.z == 0){
-    MOTOR.setSpeedDir(rob_spd,DIRF); // Robot moves forward
+  if (cmd_msg.linear.x == 20 && cmd_msg.angular.z == 0){ // Makes robot go forward
+    MOTOR.setSpeedDir(rob_spd,DIRF); 
   }
-
-  if (cmd_msg.linear.x == 0 && cmd_msg.angular.z == 20){
+  if (cmd_msg.linear.x == 0 && cmd_msg.angular.z == 20){ // Makes robot rotate
     MOTOR.setSpeedDir1(rob_spd-10,DIRF);
     MOTOR.setSpeedDir2(rob_spd,DIRF);
   }
+  if(cmd_msg.linear.x == 0 && cmd_msg.angular.z == 0){ // Makes robot stop
+    MOTOR.setStop1();
+    MOTOR.setStop2(); 
+  }
+  
 }
 
 ros::Subscriber<geometry_msgs::Twist> sub_cmd_vel("cmd_vel" , wheel_cb);
