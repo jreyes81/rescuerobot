@@ -20,6 +20,7 @@ import rospy
 
 from sensor_msgs.msg import Range # Ultrasound
 from geometry_msgs.msg import Twist # Robot movements
+from pygame_radar import stop_button
 
 class Navigation(object):
     def __init__(self):
@@ -30,6 +31,7 @@ class Navigation(object):
         self.twist = Twist()
         self.twist.linear.x = 0
         self.twist.angular.z = 0
+	self.stopbutton = stop_button() # Importing stop value from pygame_radar.py's stop_button funcion
 
         # Subscriber
         self.ran_sub = rospy.Subscriber("HerculesUltrasound_Range", Range, self.distcallback) #Used to be Float32. [Float 32, callback])
@@ -48,7 +50,7 @@ class Navigation(object):
     def move(self): # Function to make robot move
         self.real_obj_dist = math.fabs(self.real_obj_dist) # Returns the absolute value of distance
 
-        if ((self.real_obj_dist < 100) & (self.real_obj_dist > 0)):
+        if ((self.real_obj_dist < 100) & (self.real_obj_dist > 0) & (self.stopbutton == 0)):
             self.twist.linear.x = 20 # Robot moves forward at 20% speed
             self.twist.angular.z = 0 # Robot does not rotate
             self.cmd_pub.publish(self.twist) # Publishes
@@ -57,6 +59,8 @@ class Navigation(object):
             self.twist.linear.x = 0
             self.twist.angular.z = 20
             self.cmd_pub.publish(self.twist)
+	
+	##if Put if statement here to make robot stop! 
 
 
 if __name__ == '__main__':
