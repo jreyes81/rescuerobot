@@ -20,7 +20,8 @@ import rospy
 
 from sensor_msgs.msg import Range # Ultrasound
 from geometry_msgs.msg import Twist # Robot movements
-from pygame_radar import stop_button
+from pygame_radar import RadarDisplay
+#import pygame_radar
 
 class Navigation(object):
     def __init__(self):
@@ -31,7 +32,7 @@ class Navigation(object):
         self.twist = Twist()
         self.twist.linear.x = 0
         self.twist.angular.z = 0
-	    self.stopbutton = stop_button() # Importing stop value from pygame_radar.py's stop_button funcion
+	self.stopbutton = RadarDisplay.stop_button() # Importing stop value from pygame_radar.py's stop_button funcion
 
         # Subscriber
         self.ran_sub = rospy.Subscriber("HerculesUltrasound_Range", Range, self.distcallback) #Used to be Float32. [Float 32, callback])
@@ -54,20 +55,24 @@ class Navigation(object):
             self.twist.linear.x = 20 # Robot moves forward at 20% speed
             self.twist.angular.z = 0 # Robot does not rotate
             self.cmd_pub.publish(self.twist) # Publishes
+	    print('Hercules Going Forward!')
 
         if ((self.real_obj_dist > 100) & (self.stopbutton == False)):
             self.twist.linear.x = 0
             self.twist.angular.z = 20
             self.cmd_pub.publish(self.twist)
+	    print('Hercules Rotating Left!')
 
-        if self.stop = True: #if statement to make robot stop
+        if self.stop == True: #if statement to make robot stop
             self.twist.linear.x = 0
             self.twist.angular.z = 0
             self.cmd_pub.publish(self.twist)
+	    print('Hercules Has Stopped!')
 
 
 if __name__ == '__main__':
-    try:
-        Navigation()
-    except rospy.ROSInterruptionException:
-        pass
+	Navigation()
+    #try:
+    #    Navigation()
+    #except rospy.ROSInterruptionException:
+    #    pass
