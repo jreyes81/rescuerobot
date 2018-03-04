@@ -31,11 +31,11 @@ class RadarDisplay():
         rospy.loginfo("%s started" % self.nodename)
 
         # Initializing and instantiating values
-        self.sx = 1000 # width of screen [Adjust width and length to fit your screen size]
-        self.sy = 1000 # length of screen
+        self.sx = 600 # width of screen [Adjust width and length to fit your screen size]
+        self.sy = 600 # length of screen
         self.count = 0
         self.real_obj_dist = 0
-	self.stop = 0 # Value to make robot stop!
+	self.stop = False # Value to make robot stop
         self.estimated_obj_dist = 0
         self.servo_pos = 0
         self.angle = 0
@@ -83,7 +83,8 @@ class RadarDisplay():
         y_pos = self.sy * 0.460
         x_length = self.sx * 0.150
         y_width = self.sy * 0.100
-        self.smalltext = pygame.font.Font("freesansbold.ttf",15)
+	fontsize = int(self.sx * 0.015)
+        self.smalltext = pygame.font.Font("freesansbold.ttf",fontsize) # 0.015
 
         textSurf1, textRect1 = self.text_object_green("25 cm", self.smalltext)
         textRect1.center = ( (x_pos +(x_length/2)), y_pos+(y_width/2))
@@ -122,7 +123,10 @@ class RadarDisplay():
         y_pos = self.sy * 0.005
         x_length = self.sx * 0.150
         y_width = self.sy * 0.100
-        self.smalltext = pygame.font.Font("freesansbold.ttf",30)
+	fontsize = int(self.sx * 0.03)
+	servo_ang_ypos = self.sy * 0.85	
+
+        self.smalltext = pygame.font.Font("freesansbold.ttf",fontsize)
         textSurfstop, textRectstop = self.text_object_green("Object Distance:", self.smalltext)
         textRectstop.center = ( (x_pos +(x_length/2)), y_pos+(y_width/2))
         pygame.display.get_surface().blit(textSurfstop, textRectstop)
@@ -137,7 +141,7 @@ class RadarDisplay():
             pygame.display.get_surface().blit(textSurfstop1, textRectstop1)
 
         textSurfstop2, textRectstop2 = self.text_object_green("Servo Angle: ", self.smalltext)
-        textRectstop2.center = ( (x_pos +(x_length/2) - self.sx * 0.550), y_pos+(y_width/2) + 850)
+        textRectstop2.center = ( (x_pos +(x_length/2) - self.sx * 0.550), y_pos+(y_width/2) + servo_ang_ypos) # Used to be 850
         pygame.display.get_surface().blit(textSurfstop2, textRectstop2)
 
     def range_to_string(self): # Label for displaying range value
@@ -147,7 +151,9 @@ class RadarDisplay():
         y_width = self.sy * 0.100
         str_dist = str(self.real_obj_dist) # converting range integer to string
         str_pos = str(self.servo_pos) # Converting angle to string
-        self.smalltext = pygame.font.Font("freesansbold.ttf",30)
+	fontsize = int(self.sx * 0.030)
+
+        self.smalltext = pygame.font.Font("freesansbold.ttf",fontsize)
         textSurfstop, textRectstop = self.text_object_green(str_dist + "cm", self.smalltext)
         textRectstop.center = ( (x_pos +(x_length/2)), y_pos+(y_width/2))
         pygame.display.get_surface().blit(textSurfstop, textRectstop)
@@ -248,25 +254,26 @@ class RadarDisplay():
     def stop_button(self): # Function to stop robot from moving
         mouse = pygame.mouse.get_pos() # Movement of mouse.
         click = pygame.mouse.get_pressed() # For button clicked
+	fontsize = int(self.sx * 0.030)
         self.smalltext = pygame.font.Font("freesansbold.ttf",30)
         x_pos = self.sx * 0.050
         y_pos = self.sy * 0.035
         x_length = self.sx * 0.150
         y_width = self.sy * 0.050
-	return stop = self.stop # Value of 0. Temp value for stop variable
+        stop = self.stop # this is equal to False
 
         if x_pos+x_length > mouse[0] > x_pos and y_pos+y_width > mouse[1] > y_width: # Hovering over box
             pygame.draw.rect(pygame.display.get_surface(),self.brightred,(x_pos,y_pos,x_length,y_width))
             if click[0] == 1:
                 print('Robot has stopped moving')
-		return stop = 1 # Value to make robot stop
-                # Inserting function that pubslishes command to motors to stop using rospy.Publisher
+		stop = True # Value to make robot stop
         else:
             pygame.draw.rect(pygame.display.get_surface(),self.red,(x_pos,y_pos,x_length,y_width))
 
         textSurf,textRect = self.text_object_black("STOP", self.smalltext) # Insert text on box
         textRect.center = ( (x_pos +(x_length/2)), y_pos+(y_width/2))
         pygame.display.get_surface().blit(textSurf, textRect)
+    	return stop
 
     def plot(self):
         pygame.init() # Initializing pygame
