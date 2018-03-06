@@ -20,19 +20,19 @@ import rospy
 
 from sensor_msgs.msg import Range # Ultrasound
 from geometry_msgs.msg import Twist # Robot movements
-from pygame_radar import RadarDisplay
-#import pygame_radar
+from robot_stop import Stop_Info
 
 class Navigation(object):
     def __init__(self):
         rospy.init_node("navigation_node", anonymous=True)
+	robotstop = robot_stop()	
 
         # Initializing values
         self.real_obj_dist = 0
         self.twist = Twist()
         self.twist.linear.x = 0
         self.twist.angular.z = 0
-	self.stopbutton = RadarDisplay.stop_button() # Importing stop value from pygame_radar.py's stop_button funcion
+	self.stopbutton = robotstop.Stop_Info()
 
         # Subscriber
         self.ran_sub = rospy.Subscriber("HerculesUltrasound_Range", Range, self.distcallback) #Used to be Float32. [Float 32, callback])
@@ -40,7 +40,8 @@ class Navigation(object):
         self.cmd_pub = rospy.Publisher("cmd_vel", Twist, queue_size=100) # Rate set in Hz
 
         rate = rospy.Rate(10) # Pubslishing at 10 hz
-
+	print('Navigation Node started')
+	print(self.stopbutton)
         while not rospy.is_shutdown():
             rate.sleep()
 

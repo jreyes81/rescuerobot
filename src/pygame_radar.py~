@@ -251,7 +251,7 @@ class RadarDisplay():
         pygame.draw.aaline(screen, self.green, center_of_circle, newpoint16,5)
         pygame.draw.aaline(screen, self.green, center_of_circle, newpoint17,5) # Creates 9 sectors above x axis
 
-    def stop_button(self): # Function to stop robot from moving
+    def stop_button(self): # Function to stop robot from moving. Break this apart into its own file.
         mouse = pygame.mouse.get_pos() # Movement of mouse.
         click = pygame.mouse.get_pressed() # For button clicked
 	fontsize = int(self.sx * 0.030)
