@@ -24,36 +24,37 @@ import rospy
 from sensor_msgs.msg import Range
 from std_msgs.msg import Float32
 
+from robot_stop import stop_button # "STOP" button function. Takes in 5 arguments
+from arc_inc import arc_inc # Markers for Arc Increments
+from linesections import linesections # Creates the cross sectional lines
+from labels import labels # Creates "Object Detected", "Object Out of Range", "Servo Angle"
+from range_to_string import range_to_string # Creates range integers to string as well as degrees
+#from plot_func import plot_func
+from text_object_black import text_object_black
+
 class RadarDisplay():
     def __init__(self):
-        rospy.init_node("radar_display", anonymous=True)
-        self.nodename = rospy.get_name()
-        rospy.loginfo("%s started" % self.nodename)
 
-        # Initializing and instantiating values
+        # Initializing values
         self.sx = 600 # width of screen [Adjust width and length to fit your screen size]
         self.sy = 600 # length of screen
         self.count = 0
         self.real_obj_dist = 0
-	self.stop = False # Value to make robot stop
+        self.stop = False # Value to make robot stop
         self.estimated_obj_dist = 0
         self.servo_pos = 0
         self.angle = 0
         self.pos = 2
         self.green = (0,200,0) # color
         self.red = (200,0,0) # color
-        self.black = (0,0,0) # color
         self.brightred = (255,0,0)
         self.brightblue = (142,229,238)
-        self.brightgreen = (0,255,0)
-        self.smalltext = 0
 
         # Subscribers
         self.sensormsgs = rospy.Subscriber("HerculesUltrasound_Range",Range, self.distcallback) #Used to be Float32. [Float 32, callback]
         self.servopos = rospy.Subscriber("HerculesUltrasound_Position",Float32, self.poscallback)
         self.plot()
-
-        rospy.spin()
+        #plot_func(self.sx,self.sy,self.real_obj_dist,self.estimated_obj_dist,self.servopos)
 
     def distcallback(self,range): # Takes in message "range" as input. Data comes back in cm
         real_obj_dist = range.range
@@ -63,221 +64,11 @@ class RadarDisplay():
 
     def poscallback(self,data):
         servo_position = data.data # 645 (or 646) is 180 degrees while 191 is 0 degrees
-       # servo_position = (servo_position - 190) * (180/455)
         self.servo_pos = servo_position
-
-    def text_object_black(self,text, font): # For black text
-        self.textSurface = font.render(text, True, self.black)
-        return self.textSurface, self.textSurface.get_rect()
-
-    def text_object_green(self,text, font): # For green text
-        self.textSurface = font.render(text, True, self.green)
-        return self.textSurface, self.textSurface.get_rect()
-
-    def text_object_red(self,text, font):
-        self.textSurface = font.render(text, True, self.red)
-        return self.textSurface, self.textSurface.get_rect()
-
-    def arc_inc(self):
-        x_pos = self.sx * 0.328
-        y_pos = self.sy * 0.460
-        x_length = self.sx * 0.150
-        y_width = self.sy * 0.100
-	fontsize = int(self.sx * 0.015)
-        self.smalltext = pygame.font.Font("freesansbold.ttf",fontsize) # 0.015
-
-        textSurf1, textRect1 = self.text_object_green("25 cm", self.smalltext)
-        textRect1.center = ( (x_pos +(x_length/2)), y_pos+(y_width/2))
-        pygame.display.get_surface().blit(textSurf1, textRect1)
-
-        textSurf2, textRect2 = self.text_object_green("50 cm", self.smalltext)
-        textRect2.center = ( (x_pos +(x_length/2) - (self.sx/10)), y_pos+(y_width/2))
-        pygame.display.get_surface().blit(textSurf2, textRect2)
-
-        textSurf3, textRect3 = self.text_object_green("75 cm", self.smalltext)
-        textRect3.center = ( (x_pos +(x_length/2) - (self.sx/5)), y_pos+(y_width/2))
-        pygame.display.get_surface().blit(textSurf3, textRect3)
-
-        textSurf4, textRect4 = self.text_object_green("100 cm", self.smalltext)
-        textRect4.center = ( (x_pos +(x_length/2) - (self.sx*0.300)), y_pos+(y_width/2))
-        pygame.display.get_surface().blit(textSurf4, textRect4)
-
-        textSurf5, textRect5 = self.text_object_green("25 cm", self.smalltext)
-        textRect5.center = ( (x_pos +(x_length/2) + (self.sx/5)), y_pos+(y_width/2))
-        pygame.display.get_surface().blit(textSurf5, textRect5)
-
-        textSurf6, textRect6 = self.text_object_green("50 cm", self.smalltext)
-        textRect6.center = ( (x_pos +(x_length/2) + (self.sx*0.300)), y_pos+(y_width/2))
-        pygame.display.get_surface().blit(textSurf6, textRect6)
-
-        textSurf7, textRect7 = self.text_object_green("75 cm", self.smalltext)
-        textRect7.center = ( (x_pos +(x_length/2) + (self.sx/2.5)), y_pos+(y_width/2))
-        pygame.display.get_surface().blit(textSurf7, textRect7)
-
-        textSurf8, textRect8 = self.text_object_green("100 cm", self.smalltext)
-        textRect8.center = ( (x_pos +(x_length/2) + (self.sx/2)), y_pos+(y_width/2))
-        pygame.display.get_surface().blit(textSurf8, textRect8) # cm and deg markers # cm markers ,e.g. 20 cm
-
-    def labels(self): # "Object Distance","Object Detected" and "Object Out of Range" label
-        x_pos = self.sx * 0.625
-        y_pos = self.sy * 0.005
-        x_length = self.sx * 0.150
-        y_width = self.sy * 0.100
-	fontsize = int(self.sx * 0.03)
-	servo_ang_ypos = self.sy * 0.85	
-
-        self.smalltext = pygame.font.Font("freesansbold.ttf",fontsize)
-        textSurfstop, textRectstop = self.text_object_green("Object Distance:", self.smalltext)
-        textRectstop.center = ( (x_pos +(x_length/2)), y_pos+(y_width/2))
-        pygame.display.get_surface().blit(textSurfstop, textRectstop)
-
-        if self.real_obj_dist < 100:
-            textSurfstop1, textRectstop1 = self.text_object_green("Object Detected", self.smalltext)
-            textRectstop1.center = ( (x_pos +(x_length/2) - (self.sx*0.300)), y_pos+(y_width/2))
-            pygame.display.get_surface().blit(textSurfstop1, textRectstop1)
-        else:
-            textSurfstop1, textRectstop1 = self.text_object_red("Object Out of Range", self.smalltext)
-            textRectstop1.center = ( (x_pos +(x_length/2) - (self.sx*0.300)), y_pos+(y_width/2))
-            pygame.display.get_surface().blit(textSurfstop1, textRectstop1)
-
-        textSurfstop2, textRectstop2 = self.text_object_green("Servo Angle: ", self.smalltext)
-        textRectstop2.center = ( (x_pos +(x_length/2) - self.sx * 0.550), y_pos+(y_width/2) + servo_ang_ypos) # Used to be 850
-        pygame.display.get_surface().blit(textSurfstop2, textRectstop2)
-
-    def range_to_string(self): # Label for displaying range value
-        x_pos = self.sx * 0.800
-        y_pos = self.sy * 0.005
-        x_length = self.sx * 0.150
-        y_width = self.sy * 0.100
-        str_dist = str(self.real_obj_dist) # converting range integer to string
-        str_pos = str(self.servo_pos) # Converting angle to string
-	fontsize = int(self.sx * 0.030)
-
-        self.smalltext = pygame.font.Font("freesansbold.ttf",fontsize)
-        textSurfstop, textRectstop = self.text_object_green(str_dist + "cm", self.smalltext)
-        textRectstop.center = ( (x_pos +(x_length/2)), y_pos+(y_width/2))
-        pygame.display.get_surface().blit(textSurfstop, textRectstop)
-
-        textSurfstop1, textRectstop1 = self.text_object_green(str_pos + "degrees", self.smalltext)
-        textRectstop1.center = ( (x_pos +(x_length/2) - (self.sx*0.540)), y_pos+(y_width/2) + (self.sy*0.850))
-        pygame.display.get_surface().blit(textSurfstop1, textRectstop1)
-
-    def linesections(self): # Creating nine sections and degree markers
-        center_of_circle = (self.sx/2,self.sy/2)
-        left_edge = ((self.sx/10),self.sx/2)
-        cent_to_lefedge = (center_of_circle[0]-left_edge[0],center_of_circle[1]-left_edge[1])
-        self.smalltext = pygame.font.Font("freesansbold.ttf",(self.sx/50) - (self.sx/200))
-        newpoint_x = [0] * 17
-        newpoint_y = [0] * 17
-        newpoint = [0] * 17
-        n = range(20,360,20) # Creates 17 integers. Used for degree markers
-
-        for i in range(17):
-                newpoint_x[i] = ( math.cos(math.radians(n[i])) * cent_to_lefedge[0] ) + ( math.sin(math.radians(n[i])) * cent_to_lefedge[1] )
-                newpoint_y[i] = ( -1 *math.sin(math.radians(n[i])) * cent_to_lefedge[0] ) + ( math.cos(math.radians(n[i])) * cent_to_lefedge[1] )
-
-        newpoint1 = (center_of_circle[0] - newpoint_x[0], newpoint_y[0] + center_of_circle[1])
-        newpoint2 = (center_of_circle[0] - newpoint_x[1], newpoint_y[1] + center_of_circle[1])
-        newpoint3 = (center_of_circle[0] - newpoint_x[2], newpoint_y[2] + center_of_circle[1])
-        newpoint4 = (center_of_circle[0] - newpoint_x[3], newpoint_y[3] + center_of_circle[1])
-        newpoint5 = (center_of_circle[0] - newpoint_x[4], newpoint_y[4] + center_of_circle[1])
-        newpoint6 = (center_of_circle[0] - newpoint_x[5], newpoint_y[5] + center_of_circle[1])
-        newpoint7 = (center_of_circle[0] - newpoint_x[6], newpoint_y[6] + center_of_circle[1])
-        newpoint8 = (center_of_circle[0] - newpoint_x[7], newpoint_y[7] + center_of_circle[1])
-        newpoint9 = (center_of_circle[0] - newpoint_x[8], newpoint_y[8] + center_of_circle[1])
-        newpoint10 = (center_of_circle[0] - newpoint_x[9], newpoint_y[9] + center_of_circle[1])
-        newpoint11 = (center_of_circle[0] - newpoint_x[10], newpoint_y[10] + center_of_circle[1])
-        newpoint12 = (center_of_circle[0] - newpoint_x[11], newpoint_y[11] + center_of_circle[1])
-        newpoint13 = (center_of_circle[0] - newpoint_x[12], newpoint_y[12] + center_of_circle[1])
-        newpoint14 = (center_of_circle[0] - newpoint_x[13], newpoint_y[13] + center_of_circle[1])
-        newpoint15 = (center_of_circle[0] - newpoint_x[14], newpoint_y[14] + center_of_circle[1])
-        newpoint16 = (center_of_circle[0] - newpoint_x[15], newpoint_y[15] + center_of_circle[1])
-        newpoint17 = (center_of_circle[0] - newpoint_x[16], newpoint_y[16] + center_of_circle[1])
-
-        textSurf1, textRect1 = self.text_object_green("20 deg", self.smalltext)
-        textRect1.center = ( newpoint1[0] - (self.sx * 0.025), newpoint1[1])
-        pygame.display.get_surface().blit(textSurf1, textRect1)
-
-
-        textSurf2, textRect2 = self.text_object_green("40 deg", self.smalltext)
-        textRect2.center = ( newpoint2[0] - (self.sx*0.030), newpoint2[1])
-        pygame.display.get_surface().blit(textSurf2, textRect2)
-
-        textSurf3, textRect3 = self.text_object_green("60 deg", self.smalltext)
-        textRect3.center = ( newpoint3[0] - (self.sx*0.025), newpoint3[1] - (self.sy* 0.005))
-        pygame.display.get_surface().blit(textSurf3, textRect3)
-
-        textSurf4, textRect4 = self.text_object_green("80 deg", self.smalltext)
-        textRect4.center = ( newpoint4[0] - (self.sx*0.025), newpoint4[1] - (self.sy * 0.010))
-        pygame.display.get_surface().blit(textSurf4, textRect4)
-
-        textSurf5, textRect5 = self.text_object_green("100 deg", self.smalltext)
-        textRect5.center = ( newpoint5[0] + (self.sx*0.025), newpoint5[1] - (self.sy*0.010))
-        pygame.display.get_surface().blit(textSurf5, textRect5)
-
-        textSurf6, textRect6 = self.text_object_green("120 deg", self.smalltext)
-        textRect6.center = ( newpoint6[0] + (self.sx*0.025), newpoint6[1] - (self.sy*0.005))
-        pygame.display.get_surface().blit(textSurf6, textRect6)
-
-        textSurf7, textRect7 = self.text_object_green("140 deg", self.smalltext)
-        textRect7.center = ( newpoint7[0] + (self.sx*0.030), newpoint7[1] - (self.sy*0.010))
-        pygame.display.get_surface().blit(textSurf7, textRect7)
-
-        textSurf8, textRect8 = self.text_object_green("160 deg", self.smalltext)
-        textRect8.center = ( newpoint8[0] + (self.sx*0.025), newpoint8[1] )
-        pygame.display.get_surface().blit(textSurf8, textRect8)
-
-        textSurf9, textRect9 = self.text_object_green("90 deg", self.smalltext)
-        textRect9.center = ( self.sx/2,(self.sx*0.085))
-        pygame.display.get_surface().blit(textSurf9, textRect9)
-
-        screen = pygame.display.get_surface()
-
-        pygame.draw.aaline(screen, self.green, center_of_circle, newpoint1,5) # Left Hand Side
-        pygame.draw.aaline(screen, self.green, center_of_circle, newpoint2,5)
-        pygame.draw.aaline(screen, self.green, center_of_circle, newpoint3,5)
-        pygame.draw.aaline(screen, self.green, center_of_circle, newpoint4,5)
-        pygame.draw.aaline(screen, self.green, center_of_circle, newpoint5,5) # Right Hand Side
-        pygame.draw.aaline(screen, self.green, center_of_circle, newpoint6,5)
-        pygame.draw.aaline(screen, self.green, center_of_circle, newpoint7,5)
-        pygame.draw.aaline(screen, self.green, center_of_circle, newpoint8,5)
-        pygame.draw.aaline(screen, self.green, center_of_circle, newpoint9,5) # Bottom Right Side
-        pygame.draw.aaline(screen, self.green, center_of_circle, newpoint10,5)
-        pygame.draw.aaline(screen, self.green, center_of_circle, newpoint11,5)
-        pygame.draw.aaline(screen, self.green, center_of_circle, newpoint12,5) # Bottom Left Side
-        pygame.draw.aaline(screen, self.green, center_of_circle, newpoint13,5)
-        pygame.draw.aaline(screen, self.green, center_of_circle, newpoint14,5)
-        pygame.draw.aaline(screen, self.green, center_of_circle, newpoint15,5)
-        pygame.draw.aaline(screen, self.green, center_of_circle, newpoint16,5)
-        pygame.draw.aaline(screen, self.green, center_of_circle, newpoint17,5) # Creates 9 sectors above x axis
-
-    def stop_button(self): # Function to stop robot from moving. Break this apart into its own file.
-        mouse = pygame.mouse.get_pos() # Movement of mouse.
-        click = pygame.mouse.get_pressed() # For button clicked
-	fontsize = int(self.sx * 0.030)
-        self.smalltext = pygame.font.Font("freesansbold.ttf",30)
-        x_pos = self.sx * 0.050
-        y_pos = self.sy * 0.035
-        x_length = self.sx * 0.150
-        y_width = self.sy * 0.050
-        stop = self.stop # this is equal to False
-
-        if x_pos+x_length > mouse[0] > x_pos and y_pos+y_width > mouse[1] > y_width: # Hovering over box
-            pygame.draw.rect(pygame.display.get_surface(),self.brightred,(x_pos,y_pos,x_length,y_width))
-            if click[0] == 1:
-                print('Robot has stopped moving')
-		stop = True # Value to make robot stop
-        else:
-            pygame.draw.rect(pygame.display.get_surface(),self.red,(x_pos,y_pos,x_length,y_width))
-
-        textSurf,textRect = self.text_object_black("STOP", self.smalltext) # Insert text on box
-        textRect.center = ( (x_pos +(x_length/2)), y_pos+(y_width/2))
-        pygame.display.get_surface().blit(textSurf, textRect)
-    	return stop
 
     def plot(self):
         pygame.init() # Initializing pygame
-        pygame.time.delay(2000) # Waits 2 seconds to get in synch with servo
+        #pygame.time.delay(2000) # Waits 2 seconds to get in synch with servo
 
         # Adjusting window
         depth_bits = 32 # Number of bits to use for color.
@@ -285,10 +76,7 @@ class RadarDisplay():
         # Initializing screen for display. Creates a display surface.
         init_screen = pygame.display.set_mode((self.sx, self.sy), 0, depth_bits) # Initializing screen for display
         title = pygame.display.set_caption('RGRR Display')
-        screen = pygame.display.get_surface() # Returns a reference to the current dusplay.
-
-        # Loop until the user clicks the close button.
-        done = False
+        screen = pygame.display.get_surface() # Returns a reference to the current display.
 
         # Initialize variables
         Rrx = [0] *512 # Creates an array of 512 zeros. 512 is number of points
@@ -315,11 +103,23 @@ class RadarDisplay():
                #pygame.draw.line(screen, self.brightred, (sx/self.pos, 100), (sx/self.pos, 900)) # Vertical Line
                pygame.draw.line(screen, self.brightblue, (self.sx/self.pos, (self.sy/10)), (self.sx/self.pos, (self.sy/2))) # Vertical Line
 
-               self.stop_button()
-               self.labels()
-               self.arc_inc()
-               self.range_to_string()
-               self.linesections()
+            #    smalltext = pygame.font.Font("freesansbold.ttf",30)
+            #    xposlength, yposwidth, mouse, x_pos, y_pos, x_length, y_width = stop_button(self.sx,self.sy,self.stop,self.brightred,self.red)
+            #    if xposlength >mouse[0] > x_pos and yposwidth > mouse[1] > y_width:
+            #        pygame.draw.rect(pygame.display.get_surface(),self.brightred,(x_pos,y_pos,x_length,y_width))
+            #    else:
+            #        pygame.draw.rect(pygame.display.get_surface(),self.red,(x_pos,y_pos,x_length,y_width))
+               #
+            #    textSurf, textRect = text_object_black("STOP",smalltext)
+            #    textRect.center = ((x_pos +(x_length/2)), y_pos+(y_width/2))
+            #    pygame.display.get_surface().blit(textSurf, textRect)
+
+               stop_button(self.sx,self.sy,self.stop,self.brightred,self.red)
+
+               labels(self.sx,self.sy,self.real_obj_dist)#self.labels()
+               arc_inc(self.sx,self.sy)#self.arc_inc()
+               range_to_string(self.sx,self.sy,self.real_obj_dist,self.servo_pos)#self.range_to_string()
+               linesections(self.sx,self.sy,self.green)#self.linesections()
                #pygame.time.delay(2000) # Waits 2 seconds to get in synch with servo
 
                for j in range(512): # 512 is the number of points drawn for entire circle.
@@ -387,7 +187,3 @@ class RadarDisplay():
                    if event.type == pygame.QUIT:
                        pygame.quit()
                        exit()
-
-
-if __name__ == '__main__':
-    RadarDisplay()
