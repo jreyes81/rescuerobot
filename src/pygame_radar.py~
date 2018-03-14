@@ -57,7 +57,7 @@ class RadarDisplay():
         
 	# Publisher
 	self.cmd_stop = rospy.Publisher('cmd_stop',Bool, queue_size=10)
-	#self.cmd_stop.publish(self.stop) # Publishes "True" or "False" value from when stop button is pressed
+	self.cmd_stop.publish(self.stop) # Publishes "True" or "False" value from when stop button is pressed
 
 	self.stop = self.plot() # Returns boolean value for when "STOP" button is pressed
 

@@ -14,7 +14,7 @@ from pygame_radar import RadarDisplay
 #cmd_stop = ""
 
 def Radar_Node():
-	#stop,cmd_stop = RadarDisplay()
+	stop,cmd_stop = RadarDisplay()
 	rospy.init_node("radar_display", anonymous=True)
 	#radar_display = RadarDisplay() # Calls RadarDisplay class
 	stop,cmd_stop = RadarDisplay()

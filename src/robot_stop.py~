@@ -13,6 +13,7 @@ import time
 import pygame
 
 from text_object_black import text_object_black
+
 STOP_BUTTON_X_SCALE = 0.030
 is_mouse_over_button_bool = False
 
@@ -38,6 +39,7 @@ def stop_button(xpos,ypos,stop_val,brightred,red):
 		if click: # When we left click on the "STOP" button
 			print('Robot has stopped moving!')
 			stop = True # Value is then set to Stop
+			
 	else:
 		pygame.draw.rect(pygame.display.get_surface(),red,(x_pos,y_pos,x_length,y_width))
 
@@ -45,7 +47,6 @@ def stop_button(xpos,ypos,stop_val,brightred,red):
 	textRect.center = ((x_pos +(x_length/2)), y_pos+(y_width/2))
 	pygame.display.get_surface().blit(textSurf, textRect)
 	return stop
-#def tranf_stop
 
 def is_mouse_over_button(xposlength, x_pos, yposwidth, y_width):
 	"""Detects if mouse is hovering over a button"""
