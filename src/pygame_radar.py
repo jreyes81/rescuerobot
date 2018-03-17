@@ -57,9 +57,10 @@ class RadarDisplay():
 
         # Publisher
         self.cmd_stop = rospy.Publisher('cmd_stop',Bool, queue_size=10)
+        self.rate = rospy.Rate(60) # 10 Hz
         #self.cmd_stop.publish(self.stop) # Publishes "True" or "False" value from when stop button is pressed
-
-        self.stop = self.plot() # Returns boolean value for when "STOP" button is pressed
+        rospy.on_shutdown(self.close)
+        self.plot() # Returns boolean value for when "STOP" button is pressed
 
     def distcallback(self,range): # Takes in message "range" as input. Data comes back in cm
         real_obj_dist = range.range
@@ -72,6 +73,7 @@ class RadarDisplay():
         self.servo_pos = servo_position
 
     def plot(self):
+        self.pub_stop_button_state()
         pygame.init() # Initializing pygame
         #pygame.time.delay(2000) # Waits 2 seconds to get in synch with servo
 
@@ -87,12 +89,14 @@ class RadarDisplay():
         Rrx = [0] *512 # Creates an array of 512 zeros. 512 is number of points
         Rry = [0] *512 # Creates an array of 512 zeros
 
-        while (True):
+        while not rospy.is_shutdown():
+          self.rate.sleep()
           if self.count == 4096:
               self.count = 0
           self.count = self.count + 1
 
           for i in range(4096): # 4096 covers entire circle and is how many times radius line is drawn
+            self.pub_stop_button_state()
             self.angle = i * (2 * math.pi)/72 #  Line is incremented by 5 degrees (6.283 is 2 pi)
 
             if i%8==0:
@@ -189,10 +193,14 @@ class RadarDisplay():
                   screen.fill((0, 20, 0, 0))
 
                for event in pygame.event.get():
-                   if event.type == pygame.QUIT:
-                       pygame.quit()
-                       exit()
-        return self.stop
+                  if event.type == pygame.QUIT:
+                      pygame.quit()
+                      exit()
+
 
     def pub_stop_button_state(self):
         self.cmd_stop.publish(self.stop)
+
+    def close(self):
+        pygame.quit()
+        exit()
