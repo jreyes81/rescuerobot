@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="rescuerobot" type="Radar_Node.py" name="radar_display_node"/>
+</launch>

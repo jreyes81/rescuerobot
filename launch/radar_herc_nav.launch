@@ -1,0 +1,4 @@
+<launch>
+  <include file="$(find rescuerobot)/launch/herc_nav.launch"/>
+  <include file="$(find rescuerobot)/launch/radar_display.launch"/>
+</launch>
