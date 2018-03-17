@@ -14,18 +14,18 @@ from pygame_radar import RadarDisplay
 #cmd_stop = ""
 
 def Radar_Node():
-	#stop,cmd_stop = RadarDisplay()
-	rospy.init_node("radar_display", anonymous=True)
-	#radar_display = RadarDisplay() # Calls RadarDisplay class
-	stop,cmd_stop = RadarDisplay()
+    #stop,cmd_stop = RadarDisplay()
+    rospy.init_node("radar_display", anonymous=True)
+    radar_display = RadarDisplay() # Calls RadarDisplay class
+    # stop,cmd_stop = RadarDisplay()
 
-	rate = rospy.Rate(10) # 10 Hz
+    rate = rospy.Rate(10) # 10 Hz
 
-	while not rospy.is_shutdown():
-	    cmd_stop.publish(stop)
-	    rate.sleep()
+    while not rospy.is_shutdown():
+        radar_display.pub_stop_button_state()
+        rate.sleep()
 
-	#rospy.spin
+    #rospy.spin
 
 if __name__ == '__main__':
-	Radar_Node()
+    Radar_Node()
