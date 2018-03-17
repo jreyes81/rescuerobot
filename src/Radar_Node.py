@@ -19,12 +19,6 @@ def Radar_Node():
     radar_display = RadarDisplay() # Calls RadarDisplay class
     # stop,cmd_stop = RadarDisplay()
 
-    rate = rospy.Rate(10) # 10 Hz
-
-    while not rospy.is_shutdown():
-        radar_display.pub_stop_button_state()
-        rate.sleep()
-
     #rospy.spin
 
 if __name__ == '__main__':
