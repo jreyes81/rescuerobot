@@ -158,7 +158,7 @@ class RadarDisplay():
             #    pygame.time.wait(30) # Sleeps the gui for 30 milliseonds to share CPU. Share with ROS
             #    # Could also use pygame.time.delay() instead of time.wait
             #    screen.fill((0, 20, 0, 0))
-               if (self.count<=2048 | self.count>=0):
+               if 0 <= self.count <= 2048:
                    dx = self.sx/2 - self.sx/2 * math.cos(math.radians(self.angle)) # Starts from left side
                    dy = self.sy/2 - self.sx/2 * math.sin(math.radians(self.angle)) # Starts from top side
                    # anti aliasing line: To make line smooth
