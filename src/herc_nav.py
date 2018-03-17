@@ -36,10 +36,10 @@ class Navigation(object):
 
         # Subscriber
         self.ran_sub = rospy.Subscriber("HerculesUltrasound_Range", Range, self.distcallback) #Used to be Float32. [Float 32, callback])
-	self.stop_cmd = rospy.Subscriber("cmd_stop",,self.stop_cb)
+    self.stop_cmd = rospy.Subscriber("cmd_stop",,self.stop_cb)
         # Publisher
         self.cmd_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10) # Rate set in Hz
-	self.twist = Twist()
+    self.twist = Twist()
         print('Navigation Node Started')
         print(self.stop)
         self.move()
@@ -49,7 +49,7 @@ class Navigation(object):
         self.real_obj_dist = real_obj_dist
 
    def stop_cb(self,data): # Takes in bool values as strings. Data messages come when "STOP" button is pressed
-	self.stop = data.data
+    self.stop = data.data
 
     def move(self): # Function to make robot move
         #while(self.start):
@@ -78,7 +78,7 @@ class Navigation(object):
 
 
 if __name__ == '__main__':
-	Navigation()
+    Navigation()
     #try:
     #    Navigation()
     #except rospy.ROSInterruptionException:

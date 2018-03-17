@@ -54,14 +54,12 @@ class RadarDisplay():
         self.sensormsgs = rospy.Subscriber("HerculesUltrasound_Range",Range, self.distcallback) #Used to be Float32. [Float 32, callback]
         self.servopos = rospy.Subscriber("HerculesUltrasound_Position",Float32, self.poscallback)
         #self.plot()
-        
-	# Publisher
-	self.cmd_stop = rospy.Publisher('cmd_stop',Bool, queue_size=10)
-	#self.cmd_stop.publish(self.stop) # Publishes "True" or "False" value from when stop button is pressed
 
-	self.stop = self.plot() # Returns boolean value for when "STOP" button is pressed
+        # Publisher
+        self.cmd_stop = rospy.Publisher('cmd_stop',Bool, queue_size=10)
+        #self.cmd_stop.publish(self.stop) # Publishes "True" or "False" value from when stop button is pressed
 
-	return self.stop, self.cmd_stop
+        self.stop = self.plot() # Returns boolean value for when "STOP" button is pressed
 
     def distcallback(self,range): # Takes in message "range" as input. Data comes back in cm
         real_obj_dist = range.range
@@ -194,4 +192,7 @@ class RadarDisplay():
                    if event.type == pygame.QUIT:
                        pygame.quit()
                        exit()
-	return self.stop
+        return self.stop
+
+    def pub_stop_button_state(self):
+        self.cmd_stop.publish(self.stop)
