@@ -28,6 +28,7 @@ class Navigation(object):
         # Initializing values
         self.real_obj_dist = 0
         self.stop = False
+        self.rate = rospy.Rate(10) # Pubslishing at 60 hz
 
         # Subscriber
         self.ran_sub = rospy.Subscriber("HerculesUltrasound_Range", Range, self.distcallback) #Used to be Float32. [Float 32, callback])
@@ -38,8 +39,9 @@ class Navigation(object):
 
         self.twist = Twist() # Contains linear and angular information
         print(self.stop)
-        if self.stop == True:
-            self.stop = True
+        # if self.stop == True:
+        #     self.stop = True
+        # print(self.stop)
         self.move()
 
     def distcallback(self,range): # Takes in message "range" as input. Data comes back in cm
@@ -50,33 +52,37 @@ class Navigation(object):
         self.stop = data.data
 
     def move(self): # Function to make robot move
-        self.real_obj_dist = math.fabs(self.real_obj_dist) # Returns the absolute value of distance
-        #print(self.stop)
+        while not rospy.is_shutdown():
 
-        # Op Mode: Straight
-        if ((0 < self.real_obj_dist < 100) and (self.stop == False)):
-            self.twist.linear.x = 20 # Robot moves forward at 20% speed
-            self.twist.angular.z = 0 # Robot does not rotate
-            self.cmd_pub.publish(self.twist) # Publishes
-            print('Hercules Going Forward!')
+            self.real_obj_dist = math.fabs(self.real_obj_dist) # Returns the absolute value of distance
+            #print(self.stop)
 
-        # Op Mode: Turn Left
-        if ((self.real_obj_dist > 100) and (self.stop == False)):
-            self.twist.linear.x = 0
-            self.twist.angular.z = 20
-            self.cmd_pub.publish(self.twist)
-            print('Hercules Rotating Left!')
+            # Op Mode: Straight
+            if ((0 < self.real_obj_dist < 100) and (self.stop == False)):
+                self.twist.linear.x = 20 # Robot moves forward at 20% speed
+                self.twist.angular.z = 0 # Robot does not rotate
+                self.cmd_pub.publish(self.twist) # Publishes
+                print('Hercules Going Forward!')
 
-        # Op Mode: Stop
-        if self.stop == True:
-            self.twist.linear.x = 0
-            self.twist.angular.z = 0
-            self.cmd_pub.publish(self.twist)
-            print('Hercules Has Stopped!')
+            # Op Mode: Turn Left
+            if ((self.real_obj_dist > 100) and (self.stop == False)):
+                self.twist.linear.x = 0
+                self.twist.angular.z = 20
+                self.cmd_pub.publish(self.twist)
+                print('Hercules Rotating Left!')
 
-        # Op Mode: Standby
-        if self.stop == False:
-            print('Hercules on Standby!')
+            # Op Mode: Stop
+            if self.stop == True:
+                self.twist.linear.x = 0
+                self.twist.angular.z = 0
+                self.cmd_pub.publish(self.twist)
+                print('Hercules Has Stopped!')
+
+            # Op Mode: Standby
+            if self.stop == False:
+                print('Hercules on Standby!')
+
+            self.rate.sleep()
 
 
 if __name__ == '__main__':
