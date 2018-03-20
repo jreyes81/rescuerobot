@@ -29,7 +29,6 @@ from arc_inc import arc_inc # Markers for Arc Increments
 from linesections import linesections # Creates the cross sectional lines
 from labels import labels # Creates "Object Detected", "Object Out of Range", "Servo Angle"
 from range_to_string import range_to_string # Creates range integers to string as well as degrees
-#from plot_func import plot_func
 from text_object_black import text_object_black
 
 class RadarDisplay():
@@ -47,24 +46,22 @@ class RadarDisplay():
         self.pos = 2
         self.green = (0,200,0) # color
         self.red = (200,0,0) # color
-        self.brightred = (255,0,0)
-        self.brightblue = (142,229,238)
+        self.brightred = (255,0,0) # color
+        self.brightblue = (142,229,238) # color
+        self.rate = rospy.Rate(60) # 60 Hz used to publish
 
         # Subscribers
         self.sensormsgs = rospy.Subscriber("HerculesUltrasound_Range",Range, self.distcallback) #Used to be Float32. [Float 32, callback]
         self.servopos = rospy.Subscriber("HerculesUltrasound_Position",Float32, self.poscallback)
-        #self.plot()
 
         # Publisher
-        self.cmd_stop = rospy.Publisher('cmd_stop',Bool, queue_size=10)
-        self.rate = rospy.Rate(60) # 10 Hz
-        #self.cmd_stop.publish(self.stop) # Publishes "True" or "False" value from when stop button is pressed
+        self.cmd_stop = rospy.Publisher('cmd_stop',Bool, queue_size=10) # Publishes "True" or "False" state of stop button
         rospy.on_shutdown(self.close)
-        self.plot() # Returns boolean value for when "STOP" button is pressed
+        self.plot()
 
     def distcallback(self,range): # Takes in message "range" as input. Data comes back in cm
         real_obj_dist = range.range
-        estimated_obj_dist = (real_obj_dist/25)*2
+        estimated_obj_dist = (real_obj_dist/25)*2 # Scales down object distance to fit on display
         self.real_obj_dist = real_obj_dist
         self.estimated_obj_dist = estimated_obj_dist
 
@@ -73,7 +70,7 @@ class RadarDisplay():
         self.servo_pos = servo_position
 
     def plot(self):
-        self.pub_stop_button_state()
+        #self.pub_stop_button_state()
         pygame.init() # Initializing pygame
         #pygame.time.delay(2000) # Waits 2 seconds to get in synch with servo
 
@@ -82,7 +79,7 @@ class RadarDisplay():
 
         # Initializing screen for display. Creates a display surface.
         init_screen = pygame.display.set_mode((self.sx, self.sy), 0, depth_bits) # Initializing screen for display
-        title = pygame.display.set_caption('RGRR Display')
+        title_screen = pygame.display.set_caption('RGRR Display')
         screen = pygame.display.get_surface() # Returns a reference to the current display.
 
         # Initialize variables
@@ -91,44 +88,30 @@ class RadarDisplay():
 
         while not rospy.is_shutdown():
           self.rate.sleep()
-          if self.count == 4096:
-              self.count = 0
-          self.count = self.count + 1
 
           for i in range(4096): # 4096 covers entire circle and is how many times radius line is drawn
             self.pub_stop_button_state()
             self.angle = i * (2 * math.pi)/72 #  Line is incremented by 5 degrees (6.283 is 2 pi)
+            if self.count == 4096:
+                self.count = 0
+            self.count = self.count + 1
 
             if i%8==0:
-               # Radius is 1000*(4/5) = 800 cm [400 cm]
                pygame.draw.circle(screen, self.green, (self.sx/self.pos, self.sy/self.pos), (self.sx/2) - (self.sx/10), 1) # Outer circle
-               #Radius is 1000/5 = 200 cm [100 cm] [100 cm translates to distance of 2
                pygame.draw.circle(screen, self.green, (self.sx/self.pos, self.sy/self.pos), (self.sx/10), 1) #Inner circle. radius was sx/pos/5*1
-               # Radius is 1000*(2/5) = 400 cm [200 cm] [200 transaltes to distance of 3]
                pygame.draw.circle(screen, self.green, (self.sx/self.pos, self.sy/self.pos), (self.sx/5), 1) # 2nd Inner circle. radius was sx/pos/5*2
-               # Radius is 1000*(3/5) = 600 cm [300 cm]
                pygame.draw.circle(screen, self.green, (self.sx/self.pos, self.sy/self.pos), (self.sx/5) + (self.sx/10), 1) # 3rd Inner Circle. radius was sx/pos/5*3
                pygame.draw.line(screen, self.green, ((self.sx/10), self.sy/self.pos), ((self.sx - (self.sx/10)), self.sy/self.pos)) # Horizontal Line. Origianlly from (0, sy/pos) to (sx,sy/pos)
                #pygame.draw.line(screen, self.brightred, (sx/self.pos, 100), (sx/self.pos, 900)) # Vertical Line
                pygame.draw.line(screen, self.brightblue, (self.sx/self.pos, (self.sy/10)), (self.sx/self.pos, (self.sy/2))) # Vertical Line
 
-            #    smalltext = pygame.font.Font("freesansbold.ttf",30)
-            #    xposlength, yposwidth, mouse, x_pos, y_pos, x_length, y_width = stop_button(self.sx,self.sy,self.stop,self.brightred,self.red)
-            #    if xposlength >mouse[0] > x_pos and yposwidth > mouse[1] > y_width:
-            #        pygame.draw.rect(pygame.display.get_surface(),self.brightred,(x_pos,y_pos,x_length,y_width))
-            #    else:
-            #        pygame.draw.rect(pygame.display.get_surface(),self.red,(x_pos,y_pos,x_length,y_width))
-               #
-            #    textSurf, textRect = text_object_black("STOP",smalltext)
-            #    textRect.center = ((x_pos +(x_length/2)), y_pos+(y_width/2))
-            #    pygame.display.get_surface().blit(textSurf, textRect)
+               # Modules imported and plotted
+               self.stop = stop_button(self.sx,self.sy,self.stop,self.brightred,self.red) # Stop Button Feature
+               labels(self.sx,self.sy,self.real_obj_dist)
+               arc_inc(self.sx,self.sy)
+               range_to_string(self.sx,self.sy,self.real_obj_dist,self.servo_pos)
+               linesections(self.sx,self.sy,self.green)
 
-               self.stop = stop_button(self.sx,self.sy,self.stop,self.brightred,self.red)
-
-               labels(self.sx,self.sy,self.real_obj_dist)#self.labels()
-               arc_inc(self.sx,self.sy)#self.arc_inc()
-               range_to_string(self.sx,self.sy,self.real_obj_dist,self.servo_pos)#self.range_to_string()
-               linesections(self.sx,self.sy,self.green)#self.linesections()
                #pygame.time.delay(2000) # Waits 2 seconds to get in synch with servo
 
                for j in range(512): # 512 is the number of points drawn for entire circle.
@@ -147,21 +130,6 @@ class RadarDisplay():
                elif self.estimated_obj_dist > 8: # If object distance is greater than 1oo cm. It gets plotted at origin
                    self.estimated_obj_dist = 0
 
-            #    dx = self.sx/2 - self.sx/2 * math.cos(math.radians(self.angle)) # Starts from lest side
-            #    dy = self.sy/2 - self.sx/2 * math.sin(math.radians(self.angle)) # Starts from top side
-            #    # anti aliasing line: To make line smooth
-            #    pygame.draw.aaline(screen, self.brightred, (self.sx/2, self.sy/2), (dx, dy),5) # Takes about 10 seconds to sweep 180 degrees
-               #
-            #    rx = int(self.sx/2 - 50 * self.estimated_obj_dist * math.cos(math.radians(self.angle)))
-            #    ry = int(self.sy/2 - 50 * self.estimated_obj_dist * math.sin(math.radians(self.angle)))
-               #
-            #    Rrx[i/8] = rx
-            #    Rry[i/8] = ry
-               #
-            #    pygame.display.update()
-            #    pygame.time.wait(30) # Sleeps the gui for 30 milliseonds to share CPU. Share with ROS
-            #    # Could also use pygame.time.delay() instead of time.wait
-            #    screen.fill((0, 20, 0, 0))
                if 0 <= self.count <= 2048:
                    dx = self.sx/2 - self.sx/2 * math.cos(math.radians(self.angle)) # Starts from left side
                    dy = self.sy/2 - self.sx/2 * math.sin(math.radians(self.angle)) # Starts from top side
@@ -177,26 +145,25 @@ class RadarDisplay():
                    # Could also use pygame.time.delay() instead of time.wait
                    screen.fill((0, 20, 0, 0))
 
-               elif (self.count>2048 | self.count <=4096):
-                  dx = self.sx/2 - self.sx/2 * math.cos(math.radians(self.angle)) # Starts from right side
-                  dy = self.sy/2 + self.sx/2 * math.sin(math.radians(self.angle)) # Starts from top side
+               elif 2048 < self.count <= 4096: #(self.count>2048 | self.count <=4096):
+                   dx = self.sx/2 - self.sx/2 * math.cos(math.radians(self.angle)) # Starts from right side
+                   dy = self.sy/2 + self.sx/2 * math.sin(math.radians(self.angle)) # Starts from top side
                   # anti aliasing line: To make line smooth
-                  pygame.draw.aaline(screen, self.brightred, (self.sx/2, self.sy/2), (dx, dy),5) # Takes about 10 seconds to sweep 180 degrees
+                   pygame.draw.aaline(screen, self.brightred, (self.sx/2, self.sy/2), (dx, dy),5) # Takes about 10 seconds to sweep 180 degrees
 
-                  rx = int(self.sx/2 - 50 * self.estimated_obj_dist * math.cos(math.radians(self.angle)))
-                  ry = int(self.sy/2 - 50 * self.estimated_obj_dist * math.sin(math.radians(self.angle)))
-                  Rrx[i/8] = rx
-                  Rry[i/8] = ry
-                  pygame.display.update()
-                  pygame.time.wait(30) # Sleeps the gui for 30 milliseonds to share CPU. Share with ROS
+                   rx = int(self.sx/2 - 50 * self.estimated_obj_dist * math.cos(math.radians(self.angle)))
+                   ry = int(self.sy/2 - 50 * self.estimated_obj_dist * math.sin(math.radians(self.angle)))
+                   Rrx[i/8] = rx
+                   Rry[i/8] = ry
+                   pygame.display.update()
+                   pygame.time.wait(30) # Sleeps the gui for 30 milliseonds to share CPU. Share with ROS
                   # Could also use pygame.time.delay() instead of time.wait
-                  screen.fill((0, 20, 0, 0))
+                   screen.fill((0, 20, 0, 0))
 
                for event in pygame.event.get():
                   if event.type == pygame.QUIT:
                       pygame.quit()
                       exit()
-
 
     def pub_stop_button_state(self):
         self.cmd_stop.publish(self.stop)
