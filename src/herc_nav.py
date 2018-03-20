@@ -37,7 +37,9 @@ class Navigation(object):
         self.cmd_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10) # Rate set in Hz
 
         self.twist = Twist() # Contains linear and angular information
-        # print(self.stop)
+        print(self.stop)
+        if self.stop == True:
+            self.stop = True
         self.move()
 
     def distcallback(self,range): # Takes in message "range" as input. Data comes back in cm
@@ -49,7 +51,7 @@ class Navigation(object):
 
     def move(self): # Function to make robot move
         self.real_obj_dist = math.fabs(self.real_obj_dist) # Returns the absolute value of distance
-        print(self.stop)
+        #print(self.stop)
 
         # Op Mode: Straight
         if ((0 < self.real_obj_dist < 100) and (self.stop == False)):
