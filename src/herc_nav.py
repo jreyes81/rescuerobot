@@ -20,7 +20,7 @@ import rospy
 
 from sensor_msgs.msg import Range # Ultrasound
 from geometry_msgs.msg import Twist # Robot movements
-from stop_to_nav import stop_to_nav
+from std_msgs.msg import Bool
 
 class Navigation(object):
     def __init__(self):
@@ -36,11 +36,11 @@ class Navigation(object):
 
         # Subscriber
         self.ran_sub = rospy.Subscriber("HerculesUltrasound_Range", Range, self.distcallback) #Used to be Float32. [Float 32, callback])
-    self.stop_cmd = rospy.Subscriber("cmd_stop",,self.stop_cb)
+        self.stop_cmd = rospy.Subscriber("cmd_stop",Bool,self.stop_cb)
         # Publisher
         self.cmd_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10) # Rate set in Hz
-    self.twist = Twist()
-        print('Navigation Node Started')
+        self.twist = Twist()
+        # print('Navigation Node Started')
         print(self.stop)
         self.move()
 
@@ -48,8 +48,8 @@ class Navigation(object):
         real_obj_dist = range.range
         self.real_obj_dist = real_obj_dist
 
-   def stop_cb(self,data): # Takes in bool values as strings. Data messages come when "STOP" button is pressed
-    self.stop = data.data
+    def stop_cb(self,data): # Takes in bool values as strings. Data messages come when "STOP" button is pressed
+        self.stop = data.data
 
     def move(self): # Function to make robot move
         #while(self.start):
