@@ -13,11 +13,12 @@ from herc_nav import Navigation
 def Nav_Node():
     rospy.init_node("navigation_node", anonymous=True)
     print('Navigation Node Started!')
+    navigation = Navigation() # Calls Navigation class
 
-    rate = rospy.Rate(60) # Pubslishing at 60 hz
-    while not rospy.is_shutdown():
-        navigation = Navigation() # Calls Navigation class
-        rate.sleep()
+    # rate = rospy.Rate(10) # Pubslishing at 60 hz
+    # while not rospy.is_shutdown():
+    #     navigation = Navigation() # Calls Navigation class
+    #     rate.sleep()
 
 if __name__ == '__main__':
     Nav_Node()
