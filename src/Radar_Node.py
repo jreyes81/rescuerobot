@@ -10,16 +10,10 @@
 import rospy
 from pygame_radar import RadarDisplay
 
-#stop = False # Inital boolean value for "STOP" button
-#cmd_stop = ""
-
 def Radar_Node():
-    #stop,cmd_stop = RadarDisplay()
     rospy.init_node("radar_display", anonymous=True)
+    print('Radar Display Node Started!')
     radar_display = RadarDisplay() # Calls RadarDisplay class
-    # stop,cmd_stop = RadarDisplay()
-
-    #rospy.spin
 
 if __name__ == '__main__':
     Radar_Node()
