@@ -24,7 +24,7 @@
   <!-- Launches the Radar display -->
   <node pkg="rescuerobot" type = "Radar_Node.py" name="radar_display_node">
   </node>
-  
+
 
 <!-- Launches the Navigation Node -->
   <node pkg="rescuerobot" type = "nav_node.py" name="navigation_node">
