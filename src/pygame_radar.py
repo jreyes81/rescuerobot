@@ -151,7 +151,7 @@ class RadarDisplay():
                   # anti aliasing line: To make line smooth
                    pygame.draw.aaline(screen, self.brightred, (self.sx/2, self.sy/2), (dx, dy),5) # Takes about 10 seconds to sweep 180 degrees
 
-                   rx = int(self.sx/2 - 50 * self.estimated_obj_dist * math.cos(math.radians(self.angle)))
+                   rx = int(self.sx/2 - 50 * self.estimated_obj_dist * math.cos(math.radians(self.angle))) # Might need to switch cos with sin
                    ry = int(self.sy/2 - 50 * self.estimated_obj_dist * math.sin(math.radians(self.angle)))
                    Rrx[i/8] = rx
                    Rry[i/8] = ry
