@@ -35,8 +35,8 @@ class RadarDisplay():
     def __init__(self):
 
         # Initializing values
-        self.sx = 600 # width of screen [Adjust width and length to fit your screen size]
-        self.sy = 600 # length of screen
+        self.sx = 700 # width of screen [Adjust width and length to fit your screen size]
+        self.sy = 700 # length of screen
         self.count = 0
         self.real_obj_dist = 0
         self.stop = False # Value to make robot stop
@@ -127,14 +127,16 @@ class RadarDisplay():
                if self.estimated_obj_dist < 0: # If object distance is smaller than 100 cm
                    self.estimated_obj_dist = math.fabs(self.estimated_obj_dist) # Returns the absolute value of distance
                    pygame.display.get_surface().blit(textSurfstop, textRectstop)
-               elif self.estimated_obj_dist > 8: # If object distance is greater than 1oo cm. It gets plotted at origin
+               elif self.estimated_obj_dist > 8: # If object distance is greater than 100 cm. It gets plotted at origin. 8 is the radius of the big circle
                    self.estimated_obj_dist = 0
 
                if 0 <= self.count <= 2048:
-                   dx = self.sx/2 - self.sx/2 * math.cos(math.radians(self.angle)) # Starts from left side
-                   dy = self.sy/2 - self.sx/2 * math.sin(math.radians(self.angle)) # Starts from top side
+                   #dx = self.sx/2 - self.sx/2 * math.cos(math.radians(self.angle)) # Starts from left side
+                   x = self.sx/2 - (self.sx/2.5)* math.cos(math.radians(self.angle))
+                   #dy = self.sy/2 - self.sx/2 * math.sin(math.radians(self.angle)) # Starts from top side
+                   y = self.sy/2 - (self.sy/2.5) * math.sin(math.radians(self.angle))
                    # anti aliasing line: To make line smooth
-                   pygame.draw.aaline(screen, self.brightred, (self.sx/2, self.sy/2), (dx, dy),5) # Takes about 10 seconds to sweep 180 degrees
+                   pygame.draw.aaline(screen, self.brightred, (self.sx/2, self.sy/2), (x, y),5) # Takes about 10 seconds to sweep 180 degrees. Used to be dx and dy
 
                    rx = int(self.sx/2 - 50 * self.estimated_obj_dist * math.cos(math.radians(self.angle)))
                    ry = int(self.sy/2 - 50 * self.estimated_obj_dist * math.sin(math.radians(self.angle)))
@@ -146,13 +148,15 @@ class RadarDisplay():
                    screen.fill((0, 20, 0, 0))
 
                elif 2048 < self.count <= 4096: #(self.count>2048 | self.count <=4096):
-                   dx = self.sx/2 - self.sx/2 * math.cos(math.radians(self.angle)) # Starts from right side
-                   dy = self.sy/2 + self.sx/2 * math.sin(math.radians(self.angle)) # Starts from top side
+                   #dx = self.sx/2 - self.sx/2 * math.cos(math.radians(self.angle)) # Starts from right side
+                   x = self.sx/2 + (self.sx/2.5)* math.cos(math.radians(self.angle-180))
+                   #dy = self.sy/2 + self.sx/2 * math.sin(math.radians(self.angle)) # Starts from top side
+                   y = self.sy/2 + (self.sy/2.5) * math.sin(math.radians(self.angle))
                   # anti aliasing line: To make line smooth
-                   pygame.draw.aaline(screen, self.brightred, (self.sx/2, self.sy/2), (dx, dy),5) # Takes about 10 seconds to sweep 180 degrees
+                   pygame.draw.aaline(screen, self.brightred, (self.sx/2, self.sy/2), (x, y),5) # Takes about 10 seconds to sweep 180 degrees. Used to be dx and dy
 
-                   rx = int(self.sx/2 - 50 * self.estimated_obj_dist * math.cos(math.radians(self.angle))) # Might need to switch cos with sin
-                   ry = int(self.sy/2 - 50 * self.estimated_obj_dist * math.sin(math.radians(self.angle)))
+                   rx = int(self.sx/2 - 50 * self.estimated_obj_dist * math.cos(math.radians(self.angle))) # Might need to switch cos with sin or change the minus sign to plus.
+                   ry = int(self.sy/2 - 50 * self.estimated_obj_dist * math.sin(math.radians(self.angle))) # Same as comment above
                    Rrx[i/8] = rx
                    Rry[i/8] = ry
                    pygame.display.update()
