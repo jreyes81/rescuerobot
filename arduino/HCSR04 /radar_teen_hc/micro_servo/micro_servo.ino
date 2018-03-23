@@ -8,8 +8,8 @@
 * Input: None
 * Output: None
 *
-* Publisher: pub_range publishes to "HerculesUltrasound_Range" topic --> Distance of Object
-*            servopos pubslishes to "HerculesUltrasound_Position" topic --> Position of servo attached to ultrasound
+* Publisher:servopos pubslishes to "HerculesUltrasound_Position" topic --> Position of servo attached to ultrasound
+* 
 * Subscriber: None
 *
 * How to Run from Terminal: Run "roscore" 
@@ -53,6 +53,9 @@ void setup() {
 }
 
 void loop() {
+  // Add a for loop to keep a count where it will be used to break the for loop
+  // Add a subscriber from the motor controller to resume sweeping once
+  // we recieve the value 2 from it.
   
   // rotates the servo motor from 15 to 165 degrees
   for(int i=15;i<=165;i++){   

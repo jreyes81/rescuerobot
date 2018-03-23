@@ -49,19 +49,25 @@ class RadarDisplay():
         self.brightred = (255,0,0) # color
         self.brightblue = (142,229,238) # color
         self.rate = rospy.Rate(60) # 60 Hz used to publish
+        self.scan_once_display = True
+        self.scan_once_herc = 0
 
         # Subscribers
         self.sensormsgs = rospy.Subscriber("HerculesUltrasound_Range",Range, self.distcallback) #Used to be Float32. [Float 32, callback]
         self.servopos = rospy.Subscriber("HerculesUltrasound_Position",Float32, self.poscallback)
+        #self.scan_once = rospy.Subsriber("scan_once_mode",Int8, self.scancb)
 
         # Publisher
         self.cmd_stop = rospy.Publisher('cmd_stop',Bool, queue_size=10) # Publishes "True" or "False" state of stop button
         rospy.on_shutdown(self.close)
         self.plot()
 
+    #def scancb(self,data):
+        #self.scan_once_herc = data.data # data comes out as 1 or 2
+
     def distcallback(self,range): # Takes in message "range" as input. Data comes back in cm
         real_obj_dist = range.range
-        estimated_obj_dist = (real_obj_dist/25)*2 # Scales down object distance to fit on display
+        estimated_obj_dist = (real_obj_dist/25)*2 # Scales down object distance to fit on display. Radius of 25 cm translates to 2 units. 100 cm translates to 8 units
         self.real_obj_dist = real_obj_dist
         self.estimated_obj_dist = estimated_obj_dist
 
@@ -94,6 +100,7 @@ class RadarDisplay():
             self.angle = i * (2 * math.pi)/72 #  Line is incremented by 5 degrees (6.283 is 2 pi)
             if self.count == 4096:
                 self.count = 0
+                self.scan_once = False
             self.count = self.count + 1
 
             if i%8==0:
@@ -113,61 +120,73 @@ class RadarDisplay():
                linesections(self.sx,self.sy,self.green)
 
                #pygame.time.delay(2000) # Waits 2 seconds to get in synch with servo
-
-               for j in range(512): # 512 is the number of points drawn for entire circle.
-                   deg = j * 5.625 / 8 # Increments by 40 degrees
-                   radar_deg = deg - self.angle # For first iteration we have 40 - 5 = 35 degrees
-                   if radar_deg <=0 :
-                      col = int(255*((360+radar_deg)/360)**1.3) # col is color
-                      pygame.draw.circle(screen, (0,col,0),(Rrx[j-1],Rry[j-1]),5)
-                   else:
-                      col = int(255*(radar_deg/360)**1.3)
-                      pygame.draw.circle(screen, (0,col,0),(Rrx[j-1],Rry[j-1]),5)
-
-               if self.estimated_obj_dist < 0: # If object distance is smaller than 100 cm
-                   self.estimated_obj_dist = math.fabs(self.estimated_obj_dist) # Returns the absolute value of distance
-                   pygame.display.get_surface().blit(textSurfstop, textRectstop)
-               elif self.estimated_obj_dist > 8: # If object distance is greater than 100 cm. It gets plotted at origin. 8 is the radius of the big circle
-                   self.estimated_obj_dist = 0
-
-               if 0 <= self.count <= 2048:
-                   #dx = self.sx/2 - self.sx/2 * math.cos(math.radians(self.angle)) # Starts from left side
-                   x = self.sx/2 - (self.sx/2.5)* math.cos(math.radians(self.angle))
-                   #dy = self.sy/2 - self.sx/2 * math.sin(math.radians(self.angle)) # Starts from top side
-                   y = self.sy/2 - (self.sy/2.5) * math.sin(math.radians(self.angle))
-                   # anti aliasing line: To make line smooth
-                   pygame.draw.aaline(screen, self.brightred, (self.sx/2, self.sy/2), (x, y),5) # Takes about 10 seconds to sweep 180 degrees. Used to be dx and dy
-
-                   rx = int(self.sx/2 - 50 * self.estimated_obj_dist * math.cos(math.radians(self.angle)))
-                   ry = int(self.sy/2 - 50 * self.estimated_obj_dist * math.sin(math.radians(self.angle)))
-                   Rrx[i/8] = rx
-                   Rry[i/8] = ry
+               if (self.scan_once == False or self.scan_once_herc == 1):
                    pygame.display.update()
                    pygame.time.wait(30) # Sleeps the gui for 30 milliseonds to share CPU. Share with ROS
                    # Could also use pygame.time.delay() instead of time.wait
                    screen.fill((0, 20, 0, 0))
 
-               elif 2048 < self.count <= 4096: #(self.count>2048 | self.count <=4096):
-                   #dx = self.sx/2 - self.sx/2 * math.cos(math.radians(self.angle)) # Starts from right side
-                   x = self.sx/2 + (self.sx/2.5)* math.cos(math.radians(self.angle-180))
-                   #dy = self.sy/2 + self.sx/2 * math.sin(math.radians(self.angle)) # Starts from top side
-                   y = self.sy/2 + (self.sy/2.5) * math.sin(math.radians(self.angle))
-                  # anti aliasing line: To make line smooth
-                   pygame.draw.aaline(screen, self.brightred, (self.sx/2, self.sy/2), (x, y),5) # Takes about 10 seconds to sweep 180 degrees. Used to be dx and dy
+                   for event in pygame.event.get():
+                      if event.type == pygame.QUIT:
+                          pygame.quit()
+                          exit()
 
-                   rx = int(self.sx/2 - 50 * self.estimated_obj_dist * math.cos(math.radians(self.angle))) # Might need to switch cos with sin or change the minus sign to plus.
-                   ry = int(self.sy/2 - 50 * self.estimated_obj_dist * math.sin(math.radians(self.angle))) # Same as comment above
-                   Rrx[i/8] = rx
-                   Rry[i/8] = ry
-                   pygame.display.update()
-                   pygame.time.wait(30) # Sleeps the gui for 30 milliseonds to share CPU. Share with ROS
-                  # Could also use pygame.time.delay() instead of time.wait
-                   screen.fill((0, 20, 0, 0))
+               if self.scan_once == True or self.scan_once == 2: # True only happens in the begging when we run the program
+                   for j in range(512): # 512 is the number of points drawn for entire circle.
+                       deg = j * 5.625 / 8 # Increments by 40 degrees
+                       radar_deg = deg - self.angle # For first iteration we have 40 - 5 = 35 degrees
+                       if radar_deg <=0 :
+                          col = int(255*((360+radar_deg)/360)**1.3) # col is color
+                          pygame.draw.circle(screen, (0,col,0),(Rrx[j-1],Rry[j-1]),5)
+                       else:
+                          col = int(255*(radar_deg/360)**1.3)
+                          pygame.draw.circle(screen, (0,col,0),(Rrx[j-1],Rry[j-1]),5)
 
-               for event in pygame.event.get():
-                  if event.type == pygame.QUIT:
-                      pygame.quit()
-                      exit()
+                   if self.estimated_obj_dist < 0: # If object distance is smaller than 100 cm
+                       self.estimated_obj_dist = math.fabs(self.estimated_obj_dist) # Returns the absolute value of distance
+                       pygame.display.get_surface().blit(textSurfstop, textRectstop)
+                   elif self.estimated_obj_dist > 8: # If object distance is greater than 100 cm. It gets plotted at origin. 8 is the radius of the big circle
+                       self.estimated_obj_dist = 0
+
+                   if 0 <= self.count <= 2048:
+                       #dx = self.sx/2 - self.sx/2 * math.cos(math.radians(self.angle)) # Starts from left side
+                       x = self.sx/2 - (self.sx/2.5)* math.cos(math.radians(self.angle))
+                       #dy = self.sy/2 - self.sx/2 * math.sin(math.radians(self.angle)) # Starts from top side
+                       y = self.sy/2 - (self.sy/2.5) * math.sin(math.radians(self.angle))
+                       # anti aliasing line: To make line smooth
+                       pygame.draw.aaline(screen, self.brightred, (self.sx/2, self.sy/2), (x, y),5) # Takes about 10 seconds to sweep 180 degrees. Used to be dx and dy
+
+                       rx = int(self.sx/2 - 50 * self.estimated_obj_dist * math.cos(math.radians(self.angle)))
+                       ry = int(self.sy/2 - 50 * self.estimated_obj_dist * math.sin(math.radians(self.angle)))
+                       Rrx[i/8] = rx
+                       Rry[i/8] = ry
+                       pygame.display.update()
+                       pygame.time.wait(30) # Sleeps the gui for 30 milliseonds to share CPU. Share with ROS
+                       # Could also use pygame.time.delay() instead of time.wait
+                       screen.fill((0, 20, 0, 0))
+
+                   elif 2048 < self.count <= 4096: #(self.count>2048 | self.count <=4096):
+                       #dx = self.sx/2 - self.sx/2 * math.cos(math.radians(self.angle)) # Starts from right side
+                       x = self.sx/2 + (self.sx/2.5)* math.cos(math.radians(self.angle-180))
+                       #dy = self.sy/2 + self.sx/2 * math.sin(math.radians(self.angle)) # Starts from top side
+                       y = self.sy/2 + (self.sy/2.5) * math.sin(math.radians(self.angle))
+                      # anti aliasing line: To make line smooth
+                       pygame.draw.aaline(screen, self.brightred, (self.sx/2, self.sy/2), (x, y),5) # Takes about 10 seconds to sweep 180 degrees. Used to be dx and dy
+
+                       rx = int(self.sx/2 - 50 * self.estimated_obj_dist * math.cos(math.radians(self.angle))) # Might need to switch cos with sin or change the minus sign to plus.
+                       ry = int(self.sy/2 - 50 * self.estimated_obj_dist * math.sin(math.radians(self.angle))) # Same as comment above
+                       Rrx[i/8] = rx
+                       Rry[i/8] = ry
+                       pygame.display.update()
+                       pygame.time.wait(30) # Sleeps the gui for 30 milliseonds to share CPU. Share with ROS
+                      # Could also use pygame.time.delay() instead of time.wait
+                       screen.fill((0, 20, 0, 0))
+
+                   for event in pygame.event.get():
+                      if event.type == pygame.QUIT:
+                          pygame.quit()
+                          exit()
+
 
     def pub_stop_button_state(self):
         self.cmd_stop.publish(self.stop)

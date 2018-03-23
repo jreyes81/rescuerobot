@@ -69,16 +69,16 @@ void loop() {
   range_msg.header.stamp = nh.now();
   pub_range.publish( &range_msg);
   
-  
+  nh.spinOnce();
   delay(30);
   
   
 
-  range_msg.range = calculateDistance(); // Ultrasound publishing
-  range_msg.header.stamp = nh.now();
-  pub_range.publish( &range_msg);
+  //range_msg.range = calculateDistance(); // Ultrasound publishing
+  //range_msg.header.stamp = nh.now();
+  //pub_range.publish( &range_msg);
   
-  nh.spinOnce();
+  //nh.spinOnce();
 
     //delay(1);
 }
