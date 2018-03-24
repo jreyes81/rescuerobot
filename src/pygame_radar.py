@@ -22,7 +22,7 @@ import numpy as np
 
 import rospy
 from sensor_msgs.msg import Range
-from std_msgs.msg import Float32,Bool
+from std_msgs.msg import Float32,Bool,Int8
 
 from robot_stop import stop_button # "STOP" button function. Takes in 5 arguments
 from arc_inc import arc_inc # Markers for Arc Increments
@@ -49,21 +49,22 @@ class RadarDisplay():
         self.brightred = (255,0,0) # color
         self.brightblue = (142,229,238) # color
         self.rate = rospy.Rate(60) # 60 Hz used to publish
-        self.scan_once_display = True
-        self.scan_once_herc = 0
+        self.scan_once_to_herc = 0
+        self.scan_once_from_herc = []
 
         # Subscribers
         self.sensormsgs = rospy.Subscriber("HerculesUltrasound_Range",Range, self.distcallback) #Used to be Float32. [Float 32, callback]
         self.servopos = rospy.Subscriber("HerculesUltrasound_Position",Float32, self.poscallback)
-        #self.scan_once = rospy.Subsriber("scan_once_mode",Int8, self.scancb)
+        self.scan_once = rospy.Subscriber("scan_once_return",Int8, self.scancb)
 
         # Publisher
         self.cmd_stop = rospy.Publisher('cmd_stop',Bool, queue_size=10) # Publishes "True" or "False" state of stop button
+        self.scan_once_send = rospy.Publisher("scan_once_to_whls",Int8, queue_size=10) # Publishes 0 or 1 for radar sweep scanning state.
         rospy.on_shutdown(self.close)
         self.plot()
 
-    #def scancb(self,data):
-        #self.scan_once_herc = data.data # data comes out as 1 or 2
+    def scancb(self,data):
+        self.scan_once_from_herc = data.data # data comes out as 1 or 2
 
     def distcallback(self,range): # Takes in message "range" as input. Data comes back in cm
         real_obj_dist = range.range
@@ -96,11 +97,13 @@ class RadarDisplay():
           self.rate.sleep()
 
           for i in range(4096): # 4096 covers entire circle and is how many times radius line is drawn
-            self.pub_stop_button_state()
-            self.angle = i * (2 * math.pi)/72 #  Line is incremented by 5 degrees (6.283 is 2 pi)
+            self.pub_stop_button_state() # Publishes state information about stop button. Continous "False" when it is not pressed and continous "True" when presses
+            self.pub_scan_once_state() # Publishes 0 continous when radar is still scanning, Publishes 1 continous when its done
+            self.angle = i * (2 * math.pi)/72 #  Line is incremented by 0.08 degrees (6.283 is 2 pi)
             if self.count == 4096:
                 self.count = 0
-                self.scan_once = False
+                self.scan_once_to_herc = 1
+                #self.scan_once_display = False
             self.count = self.count + 1
 
             if i%8==0:
@@ -120,7 +123,7 @@ class RadarDisplay():
                linesections(self.sx,self.sy,self.green)
 
                #pygame.time.delay(2000) # Waits 2 seconds to get in synch with servo
-               if (self.scan_once_display == False or self.scan_once_herc == 1): # Radar sweeps once then stops
+               if (self.scan_once_to_herc == 1 and self.scan_once_from_herc == 1): # Radar sweeps once then stops
                    pygame.display.update()
                    pygame.time.wait(30) # Sleeps the gui for 30 milliseonds to share CPU. Share with ROS
                    # Could also use pygame.time.delay() instead of time.wait
@@ -131,7 +134,7 @@ class RadarDisplay():
                           pygame.quit()
                           exit()
 
-               if self.scan_once_display == True or self.scan_once == 2: # True only happens in the begging when we run the program
+               if self.scan_once_to_herc == 0 or self.scan_once_from_herc == 2: # True only happens in the begging when we run the program
                    for j in range(512): # 512 is the number of points drawn for entire circle.
                        deg = j * 5.625 / 8 # Increments by 40 degrees
                        radar_deg = deg - self.angle # For first iteration we have 40 - 5 = 35 degrees
@@ -190,6 +193,9 @@ class RadarDisplay():
 
     def pub_stop_button_state(self):
         self.cmd_stop.publish(self.stop)
+
+    def pub_scan_once_state(self):
+        self.scan_once_send.publish(self.scan_once_to_herc)
 
     def close(self):
         pygame.quit()
