@@ -6,10 +6,10 @@
 * Cal State LA
 *
 * Input: None
-* Output: None
+* Output: "Range" messages containing object distance information in cm
 *
 * Publisher: pub_range publishes to "HerculesUltrasound_Range" topic --> Distance of Object
-*            servopos pubslishes to "HerculesUltrasound_Position" topic --> Position of servo attached to ultrasound
+*            
 * Subscriber: None
 *
 * How to Run from Terminal: Run "roscore" 
