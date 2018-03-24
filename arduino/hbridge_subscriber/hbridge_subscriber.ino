@@ -104,13 +104,13 @@ void wheel_cb( const geometry_msgs::Twist& cmd_msg){ // message name cmd_msg
 }
 
 ros::Subscriber<geometry_msgs::Twist> sub_cmd_vel("cmd_vel" , wheel_cb); 
-ros::Publisher scan_once_mode("scan_once_mode", &int_msg);
+ros::Publisher scan_once_return("scan_once_return", &int_msg);
 
 void setup()
 {
   nh.initNode();
   nh.subscribe(sub_cmd_vel); // Subscribing to topic "cmd_vel" with nickname sub_cmd_vel
-  nh.advertise(scan_once_mode); // Publishing to topic "scan_once_mode"
+  nh.advertise(scan_once_return); // Publishing to topic "scan_once_mode"
   //define the mode of the pins, are they pins sending data to outside peripherals? or recieving data? .....
 
   pinMode(ENA, OUTPUT);
@@ -129,7 +129,7 @@ void setup()
 void loop()
 {
   //nh.spinOnce();
-  scan_once_mode.publish( &int_msg );
+  scan_once_return.publish( &int_msg );
   nh.spinOnce();
   delay(1);
 }
