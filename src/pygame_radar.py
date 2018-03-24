@@ -120,7 +120,7 @@ class RadarDisplay():
                linesections(self.sx,self.sy,self.green)
 
                #pygame.time.delay(2000) # Waits 2 seconds to get in synch with servo
-               if (self.scan_once == False or self.scan_once_herc == 1):
+               if (self.scan_once_display == False or self.scan_once_herc == 1): # Radar sweeps once then stops
                    pygame.display.update()
                    pygame.time.wait(30) # Sleeps the gui for 30 milliseonds to share CPU. Share with ROS
                    # Could also use pygame.time.delay() instead of time.wait
@@ -131,7 +131,7 @@ class RadarDisplay():
                           pygame.quit()
                           exit()
 
-               if self.scan_once == True or self.scan_once == 2: # True only happens in the begging when we run the program
+               if self.scan_once_display == True or self.scan_once == 2: # True only happens in the begging when we run the program
                    for j in range(512): # 512 is the number of points drawn for entire circle.
                        deg = j * 5.625 / 8 # Increments by 40 degrees
                        radar_deg = deg - self.angle # For first iteration we have 40 - 5 = 35 degrees
@@ -156,8 +156,8 @@ class RadarDisplay():
                        # anti aliasing line: To make line smooth
                        pygame.draw.aaline(screen, self.brightred, (self.sx/2, self.sy/2), (x, y),5) # Takes about 10 seconds to sweep 180 degrees. Used to be dx and dy
 
-                       rx = int(self.sx/2 - 50 * self.estimated_obj_dist * math.cos(math.radians(self.angle)))
-                       ry = int(self.sy/2 - 50 * self.estimated_obj_dist * math.sin(math.radians(self.angle)))
+                       rx = int(self.sx/2 - 50 * self.estimated_obj_dist * math.cos(math.radians(self.angle))) # Starts plotting left
+                       ry = int(self.sy/2 - 50 * self.estimated_obj_dist * math.sin(math.radians(self.angle))) # Starts Plotting on top
                        Rrx[i/8] = rx
                        Rry[i/8] = ry
                        pygame.display.update()
@@ -173,8 +173,8 @@ class RadarDisplay():
                       # anti aliasing line: To make line smooth
                        pygame.draw.aaline(screen, self.brightred, (self.sx/2, self.sy/2), (x, y),5) # Takes about 10 seconds to sweep 180 degrees. Used to be dx and dy
 
-                       rx = int(self.sx/2 - 50 * self.estimated_obj_dist * math.cos(math.radians(self.angle))) # Might need to switch cos with sin or change the minus sign to plus.
-                       ry = int(self.sy/2 - 50 * self.estimated_obj_dist * math.sin(math.radians(self.angle))) # Same as comment above
+                       rx = int(self.sx/2 - 50 * self.estimated_obj_dist * math.cos(math.radians(self.angle))) # Starts plotting right
+                       ry = int(self.sy/2 + 50 * self.estimated_obj_dist * math.sin(math.radians(self.angle))) # Starts plotting top
                        Rrx[i/8] = rx
                        Rry[i/8] = ry
                        pygame.display.update()
