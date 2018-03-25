@@ -17,9 +17,8 @@ from geometry_msgs.msg import Twist
 
 class opmodes():
     def __init__(self):
-
-    # Initializing values
-    self.hi = "hello"
+    #Initializing values
+        self.hi = "hello"
 
 
 	# opmode 1 conditions: object detected in sector 5 & NOT overlapping sector 4 & NOT overlapping sector 6
