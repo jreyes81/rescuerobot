@@ -16,11 +16,6 @@
 from geometry_msgs.msg import Twist
 
 class opmodes():
-    def __init__(self):
-    #Initializing values
-        self.hi = "hello"
-
-
 	# opmode 1 conditions: object detected in sector 5 & NOT overlapping sector 4 & NOT overlapping sector 6
 	# maneuver: robot goes forward
 	def opmode1(self):
@@ -51,9 +46,6 @@ class opmodes():
         self.twist.angular.z = -1 # rotates robot right
         self.twist.linear.x  = 1  # robot moves forward 
         #print('Op Mode 3 Complete')
-
-    def string(self):
-        hi = "iiiii"
 
     # stopmode is the default case that sets all motors to STOP
 	def stopmode(self):
