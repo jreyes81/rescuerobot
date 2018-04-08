@@ -18,16 +18,11 @@
 import math
 import sys
 import rospy
-import opmodes
 
 from sensor_msgs.msg import Range # Ultrasound
 from geometry_msgs.msg import Twist # Robot movements
 from std_msgs.msg import Bool,Int8
-
-
-cases = {
- 'opmode1': opmode1, 'opmode2': opmode2, 'opmode3': opmode3, 'stopmode': stopmode
- }
+from opmodes import opmodes
 
 class Navigation(object):
     def __init__(self):
@@ -37,6 +32,9 @@ class Navigation(object):
         self.stop = False
         self.rate = rospy.Rate(10) # Pubslishing at 60 hz
         self.scan_once_state = []
+        self.sector4_empty = False # Used to tell if robot will navigate through this
+        self.sector5_empty = False 
+        self.sector6_empty = False 
 
         # Subscriber
         self.ran_sub = rospy.Subscriber("HerculesUltrasound_Range", Range, self.distcallback) #Used to be Float32. [Float 32, callback])
@@ -94,23 +92,25 @@ class Navigation(object):
 
             self.rate.sleep()
 '''
+    # each sector will be an object under the "   " class. The "  " class will have the "empty" function that
+    # returns a Boolean value of 0 if no object was detected in that sector and returns 1 if there was an object detected
     def nav_route(self, empty)
         if sector5.empty == 0:
             # opmode 1 conditions: object is only detected in sector 5
             # maneuver: robot goes forward
             if sector4.empty == 1 && sector6.empty == 1:
-            return cases[opmode1]
+            return opmodes.opmode1
             # opmode 2 conditions: object detected only in sector 5 and 4
             # maneuver: robot rotates RIGHT (diagonally), goes forward, rotates left (diagonally), goes forward 
             elif sector4.empty == 0 && sector6.empty == 1:
-            return cases[opmode2]
+            return opmodes.opmode2
             # opmode 3 conditions: object detected only in sector 5 and 6
             # maneuver: robot rotates left (diagonally), goes forward, rotates right (diagonally), goes forward
             elif sector5.empty == 0 && sector4.empty == 0 && sector6.empty == 1:
-            return cases[opmode3]
-        # stopmode is the default case that sets all motors to STOP --- But we should make it go forward 0.5m
+            return opmodes.opmode3
+        # stopmode is the default case that sets all motors to STOP
         else:
-            return cases[stopmode]
+            return opmodes.standby
 
 
 
