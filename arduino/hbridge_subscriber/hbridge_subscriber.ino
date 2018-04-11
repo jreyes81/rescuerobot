@@ -42,6 +42,7 @@
 
 ros::NodeHandle nh; // instantiating node handle to create publishers and subscribers
 // This also takes care of our serial port communication
+
 std_msgs::Float32 int_msg; // Creating message instance
 
 int ENA = 30;//teensy pin 30. For Right motor
@@ -57,50 +58,60 @@ int IN4 = 6;
 
 void straight() // Function to make robot go straight
 {
-    analogWrite(ENA, 150); // This sets the speed of the motor
-    analogWrite(ENB, 150); // This sets the speed of the motor
+    analogWrite(ENA, 250); // This sets the speed of the motor
+    analogWrite(ENB, 250); // This sets the speed of the motor
     digitalWrite(IN1, LOW);
     digitalWrite(IN2, HIGH);
     digitalWrite(IN3, LOW);
     digitalWrite(IN4, HIGH);  // Might need to put a delay to make robot go forwards for a few seconds
+    //int_msg.data = 2 //send value of 2 to have robot scan again in "Data Collection Mode"
+    //delay(2000); // Moves for 2 seconds
   }
 
 void right_turn() // Function to make robot go right
 {
-    analogWrite(ENB, 150); // This sets the speed of the right motor
+    analogWrite(ENB, 250); // This sets the speed of the left motor
     digitalWrite(IN3, HIGH);
     digitalWrite(IN4, HIGH);
   }
+
+void stop_robot() // Function to make robot stop
+{
+  digitalWrite(ENA, LOW); // right motor stops
+  digitalWrite(ENB, LOW); // left motor stops
+  }
+
   
 void wheel_cb( const geometry_msgs::Twist& cmd_msg){ // message name cmd_msg
   float linear = cmd_msg.linear.x;
   float angular = cmd_msg.angular.z;
-  int_msg.data = 1; //Sends info about scan mode to have robot not scan!
+  //int_msg.data = 1; //Sends info about scan mode to have robot not scan!
 
-  if (linear == 20 && angular == 0){ // Makes robot go forward
+  if (linear == 20 && angular == 0)// Makes robot go forward
+  { 
     straight(); // Function to make robot go straight
-    delay(1000);
-    int_msg.data = 2; // sends value of 2 to have robot
-    // resume scanning once it is done moving  
+    //delay(2000);
+    //stop_robot();
+    int_msg.data = 2; // sends value of 2 to have robot scan again in "Data Collection Mode"
   }
   
-  if (linear == 0 && angular == 20){ // Makes robot rotate right
+  if (linear == 0 && angular == 20)// Makes robot rotate right
+  { 
     right_turn(); // Function to make robot turn right
-    delay(1000);
-    int_msg.data = 2; // sends True boolean to have robot
-    // resume scanning once it is done moving 
-    
+    //delay(1000);
+    //stop_robot(); // Function to make robot stop
+    int_msg.data = 2; // sends value of 2 to have robot scan again in "Data Collection Mode
   }
   
-  if(linear == 0 && angular == 0 && int_msg.data == 1){ // Makes robot stop
-    digitalWrite(ENA, LOW);
-    digitalWrite(ENB, LOW);
+  if(linear == 0 && angular == 0 && int_msg.data == 1) // Has robot not move and stop moving when stop button is pressed
+  { 
+    stop_robot(); // Function to make robot stop
+    int_msg.data = 1;
   }
   
 }
 
 ros::Subscriber<geometry_msgs::Twist> sub_cmd_vel("cmd_vel" , wheel_cb); 
-//std_msgs::Float32 int_msg; // Creating message instance
 ros::Publisher scan_once_return("scan_once_return", &int_msg);
 
 void setup()
@@ -114,12 +125,13 @@ void setup()
   pinMode(IN2, OUTPUT);
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
+  //int_msg.data = 1; //Sends info about scan mode to have robot not scan!
 }
 
 void loop()
 {
-  scan_once_return.publish( &int_msg );
-  nh.spinOnce();
   //scan_once_return.publish( &int_msg );
+  nh.spinOnce(); // callback gets implemented
+  scan_once_return.publish( &int_msg ); // state info of 2 (robot scan again)
   delay(1);
 }
