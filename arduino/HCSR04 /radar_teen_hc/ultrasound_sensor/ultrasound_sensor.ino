@@ -26,15 +26,11 @@
 #include <ros.h>
 #include <ros/time.h>
 #include <sensor_msgs/Range.h>
-//#include <std_msgs/Float32.h>
-
 
 ros::NodeHandle nh;
 
 sensor_msgs::Range range_msg; // This creates the message type "Range"
-//std_msgs::Float32 str_msg; // This creates the message type "Float 32"
 ros::Publisher pub_range( "/HerculesUltrasound_Range", &range_msg);
-//ros::Publisher servopos("/HerculesUltrasound_Position", &str_msg); 
  
 // Defines Trig and Echo pins of the Ultrasonic Sensor
 const int trigPin = 4; //digital pin
@@ -58,13 +54,10 @@ void setup() {
   
   pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
   pinMode(echoPin, INPUT); // Sets the echoPin as an Input
-  //Serial.begin(9600);
 }
 
 void loop() {
   
-  
-
   range_msg.range = calculateDistance(); // Ultrasound publishing
   range_msg.header.stamp = nh.now();
   pub_range.publish( &range_msg);
@@ -96,6 +89,6 @@ float calculateDistance(){
   
   duration = pulseIn(echoPin, HIGH); // Reads the echoPin, returns the sound wave travel time in microseconds
   distance= duration*0.034/2;
-  return distance; // 100; // in meters
+  return distance; // Distance is returned in cm
 
 }
