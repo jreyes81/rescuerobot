@@ -1,5 +1,5 @@
  /* 
-    Amr - 11/14/2017
+    Amr wanly  - 11/14/2017
     Basic Navigation 
     Car Moves Forward and makes a turn procedure
 */
@@ -11,20 +11,20 @@ int ENA = 30;
 int ENB = 2;
 
 //right motors
-int IN1 = 10;
-int IN2 = 9;
+//int IN1 = 10;
+int IN2 = 9; //Only using this one!!
 
 //left motors
-int IN3 = 7;
-int IN4 = 6;
+//int IN3 = 7;
+int IN4 = 6; // Only using this one!!
 
 void straight()
 {
   digitalWrite(ENA, HIGH); // Going forward
   digitalWrite(ENB, HIGH);
-  digitalWrite(IN1, LOW);
+  //digitalWrite(IN1, LOW);
   digitalWrite(IN2, HIGH);
-  digitalWrite(IN3, LOW);
+  //digitalWrite(IN3, LOW);
   digitalWrite(IN4, HIGH);
   }
 
@@ -32,7 +32,7 @@ void right ()
 {
   digitalWrite(ENA, HIGH); // Going Right
   digitalWrite(ENB, LOW);
-  digitalWrite(IN3, HIGH);
+  //digitalWrite(IN3, HIGH);
   digitalWrite(IN4, HIGH);
   }
 
@@ -41,9 +41,9 @@ void setup() {
   //define the mode of the pins, are they pins sending data to outside peripherals? or recieving data? .....
   pinMode(ENA, OUTPUT);
   pinMode(ENB, OUTPUT);
-  pinMode(IN1, OUTPUT);
+  //pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
-  pinMode(IN3, OUTPUT);
+  //pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
 }
 
