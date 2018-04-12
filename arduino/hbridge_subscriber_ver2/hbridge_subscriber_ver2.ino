@@ -63,16 +63,17 @@ void straight() // Function to make robot go straight
 
 void right_turn() // Function to make robot go right
 {
-    analogWrite(ENA, 150); // For left motor
-    analogWrite(ENB, -150);
+    analogWrite(ENA, 250); // For left motor
+    //digitalWrite(ENB, HIGH);
+    analogWrite(ENB, -250);
     digitalWrite(IN4, HIGH);
     digitalWrite(IN2, HIGH);
   }
 
 void left_turn() // Function to make robot go left
 {
-  analogWrite(ENA, -150);
-  analogWrite(ENB, 150);
+  analogWrite(ENA, -250);
+  analogWrite(ENB, 250);
   digitalWrite(IN2, LOW);
   digitalWrite(IN4, HIGH);
   }
@@ -91,7 +92,7 @@ void wheel_cb( const geometry_msgs::Twist& cmd_msg) // message name cmd_msg. Use
   angular = cmd_msg.angular.z;
   to_stop = cmd_msg.linear.z;
 
-  if (linear == 20 && angular == 20)// Makes robot go forward
+  if (linear == 20 && angular == 0)// Makes robot go forward
   {
     straight();
   }
