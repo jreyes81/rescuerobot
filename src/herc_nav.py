@@ -32,6 +32,7 @@ class Navigation(object):
         self.stop = False
         self.rate = rospy.Rate(60) # Pubslishing at 60 hz
         self.scan_once_state = []
+        self.scan_once_return = 2 # Used to send state information back to radar display to scan again
         self.count = 0
         self.store_count_obj = 0
         self.robot_on_standby = True
@@ -61,12 +62,15 @@ class Navigation(object):
 
         # Publisher
         self.cmd_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10) # Rate set in Hz
+        self.scan_return = rospy.Publisher("scan_once_return", Float32, queue_size=10) # Returns 2 to have robot scan again as soon as robot is finished moving
 
         self.twist = Twist() # Contains linear and angular information
         self.robot_state()
 
     def scan_once_state_cb(self,data):
-        self.scan_once_state = data.data # 0 is when radar is still sweeping. 1 is when radar has stopped sweepin
+        self.scan_once_state = data.data # 0 is when radar is still sweeping. 1 is when radar has stopped sweeping
+        if self.scan_once_state == 0: # For 2nd iterations and above when robot sweeps again
+            self.count = 0 # Reseting count when radar scans again and we need to move again!
 
     def robot_state(self):
         while not rospy.is_shutdown():
@@ -75,10 +79,7 @@ class Navigation(object):
                 self.twist.linear.x = 0
                 self.twist.angular.z = 0
                 self.cmd_pub.publish(self.twist)
-                #print('Hercules On Standby!')
-                #self.store_data() # nav code stores data
-                #self.move()
-                #self.store_data()
+
             if self.scan_once_state == 1: # Robot dones scanning and ready to process data
                 print("Robot Stopped Scanning and Processing Data!")
                 self.store_data_in_sectors() # Seperates the self.real_obj_dist_array into the 9 sectors to process data
@@ -93,7 +94,7 @@ class Navigation(object):
                 if self.done_processing_data == True: # Robot has finished processing data and ready to send commands to motor controller to move!
                 #print("Done Processing Data!")
                     self.move()
-                    self.count = self.count + 1
+                    self.count = self.count + 1 # It takes about 5 seconds to get to a 300 count!
 
     def distcallback(self,data): # Takes in message "range" as input. Data comes back in cm. This part of code works well!
         if self.scan_once_state == 0: # As long as radar is sweeping, store data
@@ -137,32 +138,8 @@ class Navigation(object):
             self.sect9[j] = self.real_obj_dist_array[2050+j] # From 2050 to 2277
 
     def process_data(self):
-        # # Storing data from 0 to 180 degree sweep!
-        # for i in range(227):
-        #     self.sect1[i] = self.real_obj_dist_array[i] # From 0 to 226
-        #     self.sect2[i] = self.real_obj_dist_array[227+i] # From 227 to 454
-        #     self.sect3[i] = self.real_obj_dist_array[455+i] # From 455 to 682
-        #     self.sect4[i] = self.real_obj_dist_array[683+i] # From 683 to 910
-        #     self.sect5[i] = self.real_obj_dist_array[911+i] # From 911 to 1138
-        #     self.sect6[i] = self.real_obj_dist_array[1139+i] # From 1139 to 1366
-        #     self.sect7[i] = self.real_obj_dist_array[1367+i] # From 1367 to 1594
-        #     self.sect8[i] = self.real_obj_dist_array[1595+i] # From 1595 to 1822
-        #     self.sect9[i] = self.real_obj_dist_array[1823+i] # From 1823 to 2050
-        #
-        # # Storing data from 180 to 0 degree sweep!
-        # for j in range(227):
-        #     self.sect1[j] = self.real_obj_dist_array[3874+i] # From 3874 to 4101
-        #     self.sect2[j] = self.real_obj_dist_array[3646+i] # From 3646 to 3873
-        #     self.sect3[j] = self.real_obj_dist_array[3418+i] # From 3418 to 3645
-        #     self.sect4[j] = self.real_obj_dist_array[3190+i] # From 3190 to 3417
-        #     self.sect5[j] = self.real_obj_dist_array[2962+i] # From 2962 to 3189
-        #     self.sect6[j] = self.real_obj_dist_array[2734+i] # From 2734 to 2961
-        #     self.sect7[j] = self.real_obj_dist_array[2506+i] # From 2506 to 2733
-        #     self.sect8[j] = self.real_obj_dist_array[2278+i] # From 2278 to 2505
-        #     self.sect9[j] = self.real_obj_dist_array[2050+j] # From 2050 to 2277
-
         # We process and analyze the information stored in sectors 4,5 and 6
-        # Based on stored distance information, we exectue following op modes!
+        # Based on stored distance information, we set information about the sectors and ir robot can navigate through them
         for i in range(454):
             if self.sect5[i] > 58: # Checking to see if there is an object in sector 5 within 60 cm
                 self.go_to_sect5 = True # There is no object detected within the 60 cm threshold of sector 5
@@ -186,49 +163,68 @@ class Navigation(object):
                         self.cmd_pub.publish(self.twist)
                         print('Hercules Has Stopped!')
 
-                    # Op Mode: Go Straight : Object is detected past 60 cm and stop button hasnt been pressed
+                    # Op Mode 1: Go Straight : Object is detected past 60 cm and stop button hasnt been pressed
                     if self.stop == False and self.go_to_sect5 == True: # Stopp button has not been pressed and there is no object in front of robot
-                        if self.count < 300:
+                        print('Hercules Going Forward!')
+                        if self.count < 150: # 300 counts is about 5 seconds. 150 counts is about 2.5 seconds
                             self.twist.linear.x = 20 # Robot moves forward
                             self.twist.angular.z = 0 # Robot does not rotate
                             self.twist.linear.z = 0
                             self.cmd_pub.publish(self.twist) # Publishes
-                        #time.sleep(6) # Forward for threee seconds
-                        if self.count >= 300:
-                            self.twist.linear.x = 0 # Robot goes Right Side
-                            self.twist.angular.z = 20
+                        if self.count >= 150:
+                            self.twist.linear.x = 0 # Robot stops
+                            self.twist.angular.z = 0
                             self.cmd_pub.publish(self.twist)
-                        print('Hercules Going Forward!')
+                            self.count = 0 # Count variable reset so it can be reused
+                            self.pub_scan_once_return() # Returns a value of 2 to have radar sweep again
 
-                    # Op Mode: Navigate Right Side Around Object : Object is within 60 cm and stop button hasn't been pressed
-                    if self.stop == False and self.go_to_sect5 == False and self.go_to_sect6 == False:
+                    # Op Mode 2: Navigate Right Side Around Object : Object is within 60 cm and stop button hasn't been pressed
+                    if self.stop == False and self.go_to_sect5 == False and self.go_to_sect4 == False:
                         print('Hercules Going Right!')
-                        if self.count < 300:
+                        if self.count < 150: # It takes about 5 seconds to get to a 300 count!
                             self.twist.linear.x = 0 # Robot steers right first
                             self.twist.angular.z = 20
                             self.cmd_pub.publish(self.twist)
-                        if 300 < self.count < 600:
+                        if 150 < self.count < 300: # From 150 to 300 is about 2.5 seconds
                             self.twist.linear.x = 0
                             self.twist.angular.z = -20 # Robot steers left second
                             self.cmd_pub.publish(self.twist)
-                        if 600 < self.count < 900:
+                        if 300 <= self.count < 450: # From 300 to 450 is about 2.5 seconds
                             self.twist.linear.x = 20
                             self.twist.angular.z = 0 # Robot then goes straight
                             self.cmd_pub.publish(self.twist)
-                        if self.count >= 900:
+                        if self.count >= 450:
                             self.twist.linear.x = 0
                             self.twist.angular.z = 0 # Robot then stops after a few seconds
                             self.cmd_pub.publish(self.twist)
+                            #self.count = 0 # Reseting count variable to be reused
+                            self.pub_scan_once_return() # Returns a value of 2 to have radar sweep again
 
-                    # Op Mode: Navigate Left Side Around Object : Object is within 60 cm and stop button hasn't been pressed
+                    # Op Mode 3: Navigate Left Side Around Object : Object is within 60 cm and stop button hasn't been pressed
                     if self.stop == False and self.go_to_sect5 == False and self.go_to_sect4 == True:
-                        self.twist.linear.x = 0
-                        self.twist.angular.z = -20
-                        self.cmd_pub.publish(self.twist)
                         print('Hercules Going Left!')
+                        if self.count < 150: # About 2.5 second travel time
+                            self.twist.linear.x = 0
+                            self.twist.angular.z = -20 # Robot goes left first!
+                            self.cmd_pub.publish(self.twist)
+                        if 150 <= self.count < 300: # From 150 to 300 is about 2.5 seconds
+                            self.twist.linear.x = 0
+                            self.twist.angular.z = 20 # Robot steers right second
+                            self.cmd_pub.publish(self.twist)
+                        if 300 <= self.count < 450: # From 300 to 450 is about 2.5 seconds
+                            self.twist.linear.x = 20
+                            self.twist.angular.z = 0 # Robot then goes straight
+                            self.cmd_pub.publish(self.twist)
+                        if self.count >= 450:
+                            self.twist.linear.x = 0
+                            self.twist.angular.z = 0 # Robot then stops after a few seconds
+                            self.cmd_pub.publish(self.twist)
+                        self.count = 0 # Reseting count variable to be reused
 
             self.rate.sleep()
 
+    def pub_scan_once_return(self):
+        self.scan_return.publish(self.scan_once_return)
 
 if __name__ == '__main__':
     Navigation()
