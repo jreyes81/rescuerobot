@@ -32,7 +32,7 @@ class Navigation(object):
         self.stop = False
         self.rate = rospy.Rate(60) # Pubslishing at 60 hz
         self.scan_once_state = []
-        self.scan_once_return = 2 # Used to send state information back to radar display to scan again
+        self.scan_once_return = 0 # Used to send state information back to radar display to scan again
         self.count = 0
         self.store_count_obj = 0
         self.robot_on_standby = True
@@ -69,18 +69,25 @@ class Navigation(object):
 
     def scan_once_state_cb(self,data):
         self.scan_once_state = data.data # 0 is when radar is still sweeping. 1 is when radar has stopped sweeping
-        if self.scan_once_state == 0: # For 2nd iterations and above when robot sweeps again
-            self.count = 0 # Reseting count when radar scans again and we need to move again!
+        #if self.scan_once_state == 1: # For 2nd iterations and above when robot sweeps again
+        #    self.count = 0 # Reseting count when radar scans again and we need to move again!
 
     def robot_state(self):
+        #if self.scan_once_state == 2:
+        #    self.count = 0
         while not rospy.is_shutdown():
-            if self.scan_once_state == 0 and self.robot_on_standby == True: # Robot scanning and awaitng orders!
+            while self.scan_once_state == 0: #and self.robot_on_standby == True: # Robot scanning and awaitng orders!
                 print("Robot Scanning and Storing Data. Hercules on Standby!")
                 self.twist.linear.x = 0
                 self.twist.angular.z = 0
                 self.cmd_pub.publish(self.twist)
+                self.scan_once_return = 1
+                self.pub_scan_once_return() # Returns a value of 1 to have radar know we received a 0 and we won't move
 
-            if self.scan_once_state == 1: # Robot dones scanning and ready to process data
+            while self.scan_once_state == 1 or self.scan_once_state == 2: # Robot dones scanning and ready to process data
+                self.done_processing_data = False
+                #self.scan_once_return = 2
+                #self.pub_scan_once_return() # Returns a value of 2 to let radar node we know it is done sweeping and we are going to move
                 print("Robot Stopped Scanning and Processing Data!")
                 self.store_data_in_sectors() # Seperates the self.real_obj_dist_array into the 9 sectors to process data
                 print("Finished seperating data in sectors")
@@ -102,7 +109,8 @@ class Navigation(object):
             #print(self.store_count_obj) # To make sure count gets incremented
             real_obj_dist = data.range # Stores object distance (raw data) info into local variable
             self.real_obj_dist_array[self.store_count_obj] = real_obj_dist # Stores local variable into an array to process data
-            print(self.real_obj_dist_array[1:self.store_count_obj]) # Should print the range ov values according to the count
+            print(self.real_obj_dist_array[1:self.store_count_obj]) # Should print the range of values according to the count
+            print(len(self.real_obj_dist_array)) # Prints the number of elements in the array. Useful to see how we can process raw data
             #print(self.real_obj_dist_array[self.store_count_obj])
             self.store_count_obj = self.store_count_obj + 1 # Increments to store next data we obtain as sensor sweeps
         if self.scan_once_state == 1: # Radar has stopped sweeping, we dont care about storing data in our processing array
@@ -155,6 +163,7 @@ class Navigation(object):
 
             if self.robot_on_standby == False: # Robot has finished collecting data and is processing it
                 if self.done_processing_data == True: # Robot has finished processing data and ready to move!
+                    # self.scan_once_return = 1 # We will publish this value to have radar sweep again after we are done moving
 
                     # Op Mode: Stop : When Emergency stop button is pressed
                     if self.stop == True: # StopButton was pressed
@@ -170,12 +179,15 @@ class Navigation(object):
                             self.twist.linear.x = 20 # Robot moves forward
                             self.twist.angular.z = 0 # Robot does not rotate
                             self.twist.linear.z = 0
+                            self.scan_once_return = 2 # We will publish this value to have radar know we are still moving
                             self.cmd_pub.publish(self.twist) # Publishes
+                            self.pub_scan_once_return()
                         if self.count >= 150:
                             self.twist.linear.x = 0 # Robot stops
                             self.twist.angular.z = 0
+                            self.scan_once_return = 3
                             self.cmd_pub.publish(self.twist)
-                            self.count = 0 # Count variable reset so it can be reused
+                            #self.count = 0 # Count variable reset so it can be reused
                             self.pub_scan_once_return() # Returns a value of 2 to have radar sweep again
 
                     # Op Mode 2: Navigate Right Side Around Object : Object is within 60 cm and stop button hasn't been pressed
@@ -184,21 +196,28 @@ class Navigation(object):
                         if self.count < 150: # It takes about 5 seconds to get to a 300 count!
                             self.twist.linear.x = 0 # Robot steers right first
                             self.twist.angular.z = 20
+                            self.scan_once_return = 2 # We will publish this value to have radar know we are still moving
                             self.cmd_pub.publish(self.twist)
+                            self.pub_scan_once_return()
                         if 150 < self.count < 300: # From 150 to 300 is about 2.5 seconds
                             self.twist.linear.x = 0
                             self.twist.angular.z = -20 # Robot steers left second
+                            self.scan_once_return = 2 # We will publish this value to have radar know we are still moving
+                            self.pub_scan_once_return()
                             self.cmd_pub.publish(self.twist)
                         if 300 <= self.count < 450: # From 300 to 450 is about 2.5 seconds
                             self.twist.linear.x = 20
                             self.twist.angular.z = 0 # Robot then goes straight
+                            self.scan_once_return = 2 # Robot is still moving
                             self.cmd_pub.publish(self.twist)
+                            self.pub_scan_once_return()
                         if self.count >= 450:
                             self.twist.linear.x = 0
                             self.twist.angular.z = 0 # Robot then stops after a few seconds
+                            self.scan_once_return = 3 # We will publish this value to have radar sweep again after we are done moving
                             self.cmd_pub.publish(self.twist)
                             #self.count = 0 # Reseting count variable to be reused
-                            self.pub_scan_once_return() # Returns a value of 2 to have radar sweep again
+                            self.pub_scan_once_return() # Returns a value of 1 to have radar sweep again
 
                     # Op Mode 3: Navigate Left Side Around Object : Object is within 60 cm and stop button hasn't been pressed
                     if self.stop == False and self.go_to_sect5 == False and self.go_to_sect4 == True:
@@ -206,20 +225,28 @@ class Navigation(object):
                         if self.count < 150: # About 2.5 second travel time
                             self.twist.linear.x = 0
                             self.twist.angular.z = -20 # Robot goes left first!
+                            self.scan_once_return = 2 # Robot is still moving
                             self.cmd_pub.publish(self.twist)
+                            self.pub_scan_once_return()
                         if 150 <= self.count < 300: # From 150 to 300 is about 2.5 seconds
                             self.twist.linear.x = 0
                             self.twist.angular.z = 20 # Robot steers right second
+                            self.scan_once_return = 2 # Robot is still moving
                             self.cmd_pub.publish(self.twist)
+                            self.pub_scan_once_return()
                         if 300 <= self.count < 450: # From 300 to 450 is about 2.5 seconds
                             self.twist.linear.x = 20
                             self.twist.angular.z = 0 # Robot then goes straight
+                            self.scan_once_return = 2 # Robot is still moving
                             self.cmd_pub.publish(self.twist)
+                            self.pub_scan_once_return()
                         if self.count >= 450:
                             self.twist.linear.x = 0
                             self.twist.angular.z = 0 # Robot then stops after a few seconds
+                            self.scan_once_return = 1 # Robot stops
                             self.cmd_pub.publish(self.twist)
-                        self.count = 0 # Reseting count variable to be reused
+                            self.pub_scan_once_return()
+                        #self.count = 0 # Reseting count variable to be reused
 
             self.rate.sleep()
 
