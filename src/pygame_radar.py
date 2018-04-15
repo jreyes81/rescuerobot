@@ -69,7 +69,7 @@ class RadarDisplay():
     def scancb(self,data):
         self.scan_once_from_herc = data.data # data comes out as 1 or 2
         if self.scan_once_from_herc == 2: # Right when we recieve a 2 telling the radar to sweep again...
-            self.scan_once_to_herc = 0 # A 0 gets publish to the nav code telling the robot not to move as it is sweeping and collecting data again
+            self.scan_once_to_herc = 0 # A 0 gets publish to the nav code telling the robot not to move as it is sweeping and collecting
 
     def distcallback(self,range): # Takes in message "range" as input. Data comes back in cm
         real_obj_dist = range.range
