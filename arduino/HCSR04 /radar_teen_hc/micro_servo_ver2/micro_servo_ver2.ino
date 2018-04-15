@@ -26,121 +26,84 @@
 
 #include <ros.h>
 //#include <ros/time.h>
-#include <std_msgs/Bool.h> // Used for range messages
-//#include <std_msgs/Int8.h> // Used for radar display states
+#include <std_msgs/Float32.h> // Used for range messages
 
 #include <Servo.h> 
 
 ros::NodeHandle nh;
 
-//std_msgs::Float32 str_msg; // This creates the message type "Float 32" 
-//std_msgs::Float32 int_msg; // Creatng message instance
-//std_msgs::Float32 echo_msg;
-//ros::Publisher servopos("/HerculesUltrasound_Position", &str_msg);
- 
-
 int servofeed = A14; // analog pin
 int servo_pos = 0; // position placeholder for servo
 int temp = 0; //variable that will store the analog feedback signal
 int start_pos = 5; // Starting position for servo
-bool sweep_state = false; // 0 for radar still sweeping. 1 for stop sweeping
-//int echo_var = 3;
+
 
 Servo myServo; // Creates a servo object for controlling the servo motor
 
-void radar_swp_cb( const std_msgs::Bool& state_msg){ //Used to be Float32
-  sweep_state = state_msg.data; // Contains either 0 or 1. 0 for sweep and 1 for not sweep
-  //echo_var = sweep_state; // To see if this part is working
-  //return 0;
+void radar_swp_cb( const std_msgs::Float32& state_msg){ //Used to be Float32 
+  float sweep_state = state_msg.data; // Contains either 0 or 1. 0 for sweep and 1 for not sweep
 
- 
+  if (sweep_state == 0) // Radar sweeping
+  {
+    for(int i=175;i>start_pos;i--)
+    {
+      //if (sweep_state == 1)
+      //{
+        //myServo.write(175);
+        //break;
+        //}
+      myServo.write(i);
+      delay(1);
+      temp = analogRead(servofeed);
+      servo_pos = ((0.3956*temp)-75.165);
+      //str_msg.data = servo_pos; // Servo position publishing
+      //servopos.publish( &str_msg);
+      delay(20); // Used to be 30 
+      }
+      delay(100); // Stoping before rotating other way!
+     for(int i=start_pos;i<=175;i++)
+     {
+     // if (sweep_state == 1)
+      //{
+       // myServo.write(175);
+       // break;
+      //  }
+      myServo.write(i);
+      delay(1);
+      temp = analogRead(servofeed);
+      servo_pos = ((0.3956*temp)-75.165);
+      //str_msg.data = servo_pos; // Servo position publishing
+      //servopos.publish( &str_msg);
+      delay(20); // Used to be 30
+      }
+      delay(100);
+    }
+
+  if (sweep_state == 1) // Radar not sweeping and robot moving
+  {
+    myServo.write(170);
+    temp = analogRead(servofeed);
+    servo_pos = ((0.3956*temp)-75.165); // Converts feedback counts to angles.
+    //str_msg.data = servo_pos; // Servo position publishing. 0 degrees
+    //servopos.publish( &str_msg);
+    }
 }
 
-ros::Subscriber<std_msgs::Bool> sub_state_msg("scan_once_to_whls", radar_swp_cb);
+ros::Subscriber<std_msgs::Float32> sub_state_msg("scan_once_to_whls", radar_swp_cb);
+
+std_msgs::Float32 int_msg; // Creatng message instance
 //ros::Publisher servopos("/HerculesUltrasound_Position", &str_msg);
-//ros::Publisher echo_state("/echostate", &echo_msg);
 
 void setup() {
-
   nh.initNode();
   nh.subscribe(sub_state_msg);
-  //nh.advertise(servopos);
-  //nh.advertise(echo_state);
 
   myServo.attach(5); // Defines on which pin is the servo motor attached
   myServo.write(170);
 }
 
 void loop() {
-
-   //if (sweep_state == false){
-    //myServo.write(170); // Servo is set to initialize position and doesn't move
-    //temp = analogRead(servofeed);
-    //servo_pos = ((0.3956*temp)-75.165); // Converts feedback counts to angles.
-    //str_msg.data = servo_pos; // Servo position publishing. 0 degrees
-    //servopos.publish( &str_msg);
-    
-    //delay(30); // Used to be delay of 30
-  //}
-  //if (sweep_state == true){ // To have servo start sweeping or resume sweeping
-    // rotates the servo motor from 15 to 165 degrees
-    for(int i=175;i>start_pos;i--)
-    { 
-      //if (sweep_state == 1){
-        //myServo.write(170); // Servo is set to initialize position and doesn't move
-        //delay(1);
-        //temp = analogRead(servofeed);
-        //servo_pos = ((0.3956*temp)-75.165); // Converts feedback counts to angles.
-        //str_msg.data = servo_pos; // Servo position publishing. 0 degrees
-        //servopos.publish( &str_msg);
-    
-        //delay(30);
-        //break; 
-      //}
-      myServo.write(i);
-      //delay(10);
-      //temp = analogRead(servofeed);
-      //servo_pos = ((0.3956*temp)-75.165);
-      //str_msg.data = servo_pos; // Servo position publishing
-      //servopos.publish( &str_msg);
-  
-      delay(30); // Used to be 30
-      }
-
-    //delay(10);
-    // Repeats the previous lines from 165 to 15 degrees
-    for(int i=start_pos;i<=175;i++) 
-    {  
-      //if (sweep_state == 1){
-       // myServo.write(170); // Servo is set to initialize position and doesn't move
-        //delay(1);
-        //temp = analogRead(servofeed);
-        //servo_pos = ((0.3956*temp)-75.165); // Converts feedback counts to angles.
-        //str_msg.data = servo_pos; // Servo position publishing. 0 degrees
-        //servopos.publish( &str_msg);
-    
-        //delay(30);
-        //break; 
-      //} 
-      myServo.write(i);
-      //delay(10);
-      //temp = analogRead(servofeed);
-      //servo_pos = ((0.3956*temp)-75.165); // Converts feedback counts to angles.
-      //str_msg.data = servo_pos; // Servo position publishing
-      //servopos.publish( &str_msg);
-  
-      delay(30); // Used to be 30
-      }
-    //delay(5000); // Stops the servo before turning the other way
-    //delay(10);
-  //}
   nh.spinOnce();
-  //Serial.write(sweep_state); Using "Serial" library in arduino with ROS does not work!!!
-  
-  //delay(5000);
-  //echo_state.publish( &echo_msg);
-  //nh.spinOnce();
-  delay(1);
-
+  //delay(1);
 }
 
