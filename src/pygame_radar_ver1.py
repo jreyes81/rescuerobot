@@ -74,8 +74,8 @@ class RadarDisplay():
         self.scan_once_from_herc = data.data # data comes out as 1 or 2
         #if self.scan_once_from_herc == 1: # Right when we recieve a 3 telling the radar to sweep again. A 3 comes when robot is done moving
         #    self.scan_once_to_herc = 0 # A 0 gets publish to the nav code telling the robot not to move as it is sweeping and collecting
-        if self.scan_once_from_herc == 3:
-            self.scan_once_to_herc = 0
+        #if self.scan_once_from_herc == 3:
+        #    self.scan_once_to_herc = 0
 
     def distcallback(self,range): # Takes in message "range" as input. Data comes back in cm
         real_obj_dist = range.range
@@ -90,7 +90,7 @@ class RadarDisplay():
     def plot(self):
         #self.pub_stop_button_state()
         pygame.init() # Initializing pygame
-        #pygame.time.delay(3400) # Waits 2 seconds to get in synch with servo
+        pygame.time.delay(3400) # Waits 2 seconds to get in synch with servo
 
         # Adjusting window
         depth_bits = 32 # Number of bits to use for color.
@@ -113,8 +113,8 @@ class RadarDisplay():
           self.pub_scan_once_state()
           print("made it inside th while not rospy loop")
         #   self.pub_scan_once_state() # self.scan_once_to_herc Publishes 0 initially
-          #if self.scan_once_from_herc == 2:
-            #  self.scan_once_to_herc = 1
+          #if self.scan_once_from_herc == 1:
+            #  self.scan_once_to_herc = 0
 
           while (self.scan_once_to_herc == 0 or self.scan_once_from_herc == 1): # Radar is scanning and robot is NOT moving
                 for i in range(950): # 4096 (Used to be this value) and then 2048, now 1024. covers entire circle and is how many times radius line is drawn
