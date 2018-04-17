@@ -79,7 +79,7 @@ class RadarDisplay():
 
     def distcallback(self,range): # Takes in message "range" as input. Data comes back in cm
         real_obj_dist = range.range
-        estimated_obj_dist = (real_obj_dist/25)*2 # Scales down object distance to fit on display. Radius of 25 cm translates to 2 units. 100 cm translates to 8 units
+        estimated_obj_dist = (real_obj_dist/25)*1.35 # Scales down object distance to fit on display. Radius of 25 cm translates to 2 units. 100 cm translates to 8 units. Used to be divided by 2
         self.real_obj_dist = real_obj_dist # Used to convert integer to string to put on display as numerical value
         self.estimated_obj_dist = estimated_obj_dist # Used to plot the radar point on display
 
@@ -117,13 +117,13 @@ class RadarDisplay():
             #  self.scan_once_to_herc = 0
 
           while (self.scan_once_to_herc == 0 or self.scan_once_from_herc == 1): # Radar is scanning and robot is NOT moving
-                for i in range(950): # 4096 (Used to be this value) and then 2048, now 1024. covers entire circle and is how many times radius line is drawn
+                for i in range(4096): # 4096 (Used to be this value) and then 2048, now 1024. covers entire circle and is how many times radius line is drawn
                    self.pub_stop_button_state() # Publishes state information about stop button. Continous "False" when it is not pressed and continous "True" when presses
                    self.pub_scan_once_state() # Publishes 0 continous when radar is still scanning, Publishes 1 continous when its done
                    #self.angle = i * (2 * math.pi)/72 #  Radar sweep line is incremented by 0.08 degrees (6.283 is 2 pi). Originally divided by 72
-                   self.angle = i * (360)/950 # This is in degrees: Used to be 360/2048 = .175, then it was 360/1024=.3516. Now its 360/1000=.36
+                   self.angle = i * (1080)/4096 # This is in degrees: Used to be 360/2048 = .175, then it was 360/1024=.3516. Now its 360/1000=.36
                    # If we divided by 52 it takes 8.6 seconds to sweep from 0 to 180 degrees. 42 takes 6.7. 32 takes 5.2. 22 takes 3.43
-                   if self.count == 950: # Use to be 4096, then 2048, now
+                   if self.count == 4096: # Use to be 4096, then 2048, now
                        self.count = 0
                        self.scan_once_to_herc = 1 # To make radar display stop sweeping
                        self.Transition = 1
@@ -149,7 +149,7 @@ class RadarDisplay():
                       range_to_string(self.sx,self.sy,self.real_obj_dist,self.servo_pos)
                       linesections(self.sx,self.sy,self.green)
 
-                      if 0 <= self.count <= 475: #Used to be up to 1024, now 900
+                      if 0 <= self.count <= 2048: #Used to be up to 1024, now 900
                          #dx = self.sx/2 - self.sx/2 * math.cos(math.radians(self.angle)) # Starts from left side
                          for j in range(512): # 512 is the number of radar points drawn for entire circle. Used to be 512, then 256, now 512 again
                              #deg = j * 5.625 / 8 # Increments by 0.703125 degrees. Used to be 5.625/8, then it was 4.21875/6, try 2.8125/4
@@ -165,7 +165,7 @@ class RadarDisplay():
                          if self.estimated_obj_dist < 0: # If object distance is smaller than 100 cm
                              self.estimated_obj_dist = math.fabs(self.estimated_obj_dist) # Returns the absolute value of distance
                              pygame.display.get_surface().blit(textSurfstop, textRectstop)
-                         elif self.estimated_obj_dist > 8: # If object distance is greater than 100 cm. It gets plotted at origin. 8 is the radius of the big circle
+                         elif self.estimated_obj_dist > 5.4: # If object distance is greater than 100 cm. It gets plotted at origin. 8 is the radius of the big circle. Used to be 8, now its 5.4
                              self.estimated_obj_dist = 0
                          x = self.sx/2 - (self.sx/2.5)* math.cos(math.radians(self.angle))
                          #dy = self.sy/2 - self.sx/2 * math.sin(math.radians(self.angle)) # Starts from top side
@@ -182,7 +182,7 @@ class RadarDisplay():
                          # Could also use pygame.time.delay() instead of time.wait
                          screen.fill((0, 20, 0, 0))
 
-                      elif 475 < self.count < 950: #Used to be from 1024 to 2048
+                      elif 2048 < self.count <= 4096: #Used to be from 1024 to 2048
                          #dx = self.sx/2 - self.sx/2 * math.cos(math.radians(self.angle)) # Starts from right side
                          for j in range(512): # 512 is the number of radar points drawn for entire circle. Used to be 512, then 256, now 512 again
                              #deg = j * 5.625 / 8 # Increments by 0.703125 degrees. Used to be 5.625/8, then it was 4.21875/6, try 2.8125/4
@@ -204,7 +204,7 @@ class RadarDisplay():
                              pygame.display.get_surface().blit(textSurfstop, textRectstop)
                          elif self.estimated_obj_dist > 8: # If object distance is greater than 100 cm. It gets plotted at origin. 8 is the radius of the big circle
                              self.estimated_obj_dist = 0
-                         x = self.sx/2 + (self.sx/2.5)* math.cos(math.radians(self.angle-180))
+                         x = self.sx/2 - (self.sx/2.5)* math.cos(math.radians(self.angle-180))
                          #dy = self.sy/2 + self.sx/2 * math.sin(math.radians(self.angle)) # Starts from top side
                          y = self.sy/2 + (self.sy/2.5) * math.sin(math.radians(self.angle))
                         # anti aliasing line: To make line smooth
