@@ -41,17 +41,18 @@ class Navigation(object):
         self.go_to_sect5 = False # Used to tell if robot will navigate through sector 5
         self.go_to_sect6 = False # Used to tell if robot will navigate through sector 6
         self.state_of_radar = True
+        # Based on micro sweep speed. We collect 460 points worth of data. Based on radar display sweep, we collecct 606 points of data, but will use 612
         self.real_obj_dist_array = [0] *460 # Will store data from ultrasound. Takes about 459-465 points worth of raw data for one complete sweep. Used to be 4101
         self.fake_obj_dist = 0 # Used to store data when we re done sweeping. It is a holder so we don't process it.
-        self.sect1 = [0]*52 # Each sector is incremented by 20 degrees. 227 data points from first half sweep
-        self.sect2 = [0]*51
-        self.sect3 = [0]*51
-        self.sect4 = [0]*51
-        self.sect5 = [0]*51
-        self.sect6 = [0]*51
-        self.sect7 = [0]*51
-        self.sect8 = [0]*51
-        self.sect9 = [0]*51 # Will contain an additional point of data
+        self.sect1 = [0]*66 # Each sector is incremented by 20 degrees. Used to be 52
+        self.sect2 = [0]*66 # Used to be 51
+        self.sect3 = [0]*66 # Used to be 51
+        self.sect4 = [0]*70 # Used to be 51
+        self.sect5 = [0]*70 # Used to be 51
+        self.sect6 = [0]*70 # Used to be 51
+        self.sect7 = [0]*66 # Used to be 51
+        self.sect8 = [0]*66 # Used to be 51
+        self.sect9 = [0]*66 # Used to be 51.Will contain an additional point of data
 
 
         # Subscriber
@@ -121,44 +122,55 @@ class Navigation(object):
         self.stop = data.data
 
     def store_data_in_sectors(self):
-        # 459 points is the sweep from 5 to 175 degrees and back
-        # 230 points is from 5 to 175 degrees!
+        # 459 points is the sweep from 5 to 175 degrees and back [micro servo speed]
+        # 606 points is the sweep from 5 to 175 degrees and back [radar display speed]
+        # 230 points is from 5 to 175 degrees! [micro servo speed]
+        # 303 points is from 5 to 175 degrees same thing back! [radar display speed]
         # 229 points is from 175 degrees to 5!
         # The index value at 230 of the array will be zero and willbe stores in sector 9 since we won't process this
-        # Storing data from 0 to 180 degree sweep!
-        for i in range(26): # Used to be 227.
-        # Sectors 3,4,5,6 and 7 will receive 26 data points. Sectors 1,2,8 and 9 will receive 25
-            self.sect3[i] = self.real_obj_dist_array[50+i] # From 50 to 75
-            self.sect4[i] = self.real_obj_dist_array[76+i] # From 76 to 101
-            self.sect5[i] = self.real_obj_dist_array[102+i] # From 102 to 127
-            self.sect6[i] = self.real_obj_dist_array[128+i] # From 128 to 153
-            self.sect7[i] = self.real_obj_dist_array[154+i] # From 154 to 179
 
-        for i in range(25):
-            self.sect1[i] = self.real_obj_dist_array[i] # From 0 to 24
-            self.sect2[i] = self.real_obj_dist_array[25+i] # From 25 to 49
-            self.sect8[i] = self.real_obj_dist_array[180+i] # From 180 to 204
-            self.sect9[i] = self.real_obj_dist_array[205+i] # From 205 to 229
+        # Storing data from 0 to 180 degree sweep!
+
+        for i in range(35): # Used to be 227.Then it was 26
+        # 1st attempt with micro servo: Sectors 3,4,5,6 and 7 will receive 26 data points. Sectors 1,2,8 and 9 will receive 25
+        # 2nd attempt with radar display speed: Sectors 4,5 and 6 will recieve 35 points. Sectors 1,2,3,7,8 and 9 will receive 33
+            #self.sect3[i] = self.real_obj_dist_array[66+i] # From 66 to 100.Used to be [50+i] From 50 to 75
+            self.sect4[i] = self.real_obj_dist_array[99+i] # From 99 to 133. Used to be [76+i] From 76 to 101
+            self.sect5[i] = self.real_obj_dist_array[134+i] # From 134 to 168. Used to be [102+i] From 102 to 127
+            self.sect6[i] = self.real_obj_dist_array[169+i] # From 169 to 203. Used to be [128+i] From 128 to 153
+            #self.sect7[i] = self.real_obj_dist_array[154+i] # Used to be [154+i] From 154 to 179
+
+        for i in range(33): # Used to be 25
+            self.sect1[i] = self.real_obj_dist_array[i] # From 0 to 32.Used to be [i] From 0 to 24
+            self.sect2[i] = self.real_obj_dist_array[33+i] # From 33 to 65.Used to be [25+i] From 25 to 49
+            self.sect3[i] = self.real_obj_dist_array[66+i] # From 66 to 98.Used to be [50+i] From 50 to 75
+            #self.sect6[i] = self.real_obj_dist_array[171+i] # From 171 to 203
+            self.sect7[i] = self.real_obj_dist_array[204+i] # From 204 to 236
+            self.sect8[i] = self.real_obj_dist_array[237+i] # From 237 to 269.Used to be[180+i] From 180 to 204
+            self.sect9[i] = self.real_obj_dist_array[270+i] # From 270 to 302. Used to be [205+i] From 205 to 229
 
         # Storing data from 180 to 0 degree sweep!
-        for j in range(25): # Used to be 227
-        # Sectors 3,4,5,6 and 7 will have 26 data points. Sectors 1,2,8, and 9 will receive 25
-            self.sect9[j] = self.real_obj_dist_array[230+j] # From 230 to 254
-            self.sect8[j] = self.real_obj_dist_array[255+j] # From 255 to 279
-            self.sect2[j] = self.real_obj_dist_array[410+j] # From 410 to 434
-            self.sect1[j] = self.real_obj_dist_array[435+j] # From 435 to 459
+        for j in range(33): # Used to be 227. Then it was 25
+        # 1st attempt with micro servo: Sectors 3,4,5,6 and 7 will have 26 data points. Sectors 1,2,8, and 9 will receive 25
+        # 2nd attempt with radar display speed: Sectors 4,5,and 6 will receive 35 points. Sectors 1,2,3,7,8 and 9 will receive 33
+            self.sect9[j] = self.real_obj_dist_array[303+j] # From 303 to 335. Used to be [230+j] From 230 to 254
+            self.sect8[j] = self.real_obj_dist_array[336+j] # From 336 to 368. Used to be [255+j] From 255 to 279
+            self.sect7[i] = self.real_obj_dist_array[369+i] # From 369 to 401.
+            self.sect3[i] = self.real_obj_dist_array[507+i] # From 507 to 539. Used to be [50+i] From 50 to 75
+            self.sect2[j] = self.real_obj_dist_array[540+j] # From 540 to 572. Used to be [410+j] From 410 to 434
+            self.sect1[j] = self.real_obj_dist_array[573+j] # From 573 to 605. Used to be [435+j] From 435 to 459
 
-        for j in range(26):
-            self.sect7[j] = self.real_obj_dist_array[280+j] # From 280 to 305
-            self.sect6[j] = self.real_obj_dist_array[306+j] # From 306 to 331
-            self.sect5[j] = self.real_obj_dist_array[332+j] # From 332 to 359
-            self.sect4[j] = self.real_obj_dist_array[360+j] # From 360 to 383
-            self.sect3[j] = self.real_obj_dist_array[384+j] # From 384 to 409
+        for j in range(35): # Used to be 26
+            #self.sect7[j] = self.real_obj_dist_array[280+j] # Used to be [280+j] From 280 to 305
+            self.sect6[j] = self.real_obj_dist_array[402+j] # From 402 to 436.Used to be [306+j] From 306 to 331
+            self.sect5[j] = self.real_obj_dist_array[437+j] # From 437 to 471. Used to be [332+j] From 332 to 359
+            self.sect4[j] = self.real_obj_dist_array[472+j] # From 472 to 506. Used to be [360+j]From 360 to 383
+            #self.sect3[j] = self.real_obj_dist_array[384+j] # Used to be [384+j] From 384 to 409
 
     def process_data(self):
         # We process and analyze the information stored in sectors 4,5 and 6
         # Based on stored distance information, we set information about the sectors and ir robot can navigate through them
-        for i in range(26): # Used to be 51
+        for i in range(35): # Used to be 51. Then it was 26
             if abs(self.sect5[i]) >= 0: # Checking to see if there is an object in sector 5 within 60 cm
                 self.go_to_sect5 = True # There is no object detected within the 60 cm threshold of sector 5
             if abs(self.sect4[i]) >= 28: # Checking to see if there is an object in sector 4 within 60 cm
