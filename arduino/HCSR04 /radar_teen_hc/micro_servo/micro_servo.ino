@@ -72,6 +72,7 @@ void loop() {
   //Serial.write(sweep_state); Using "Serial" library in arduino with ROS does not work!!!
   if (sweep_state == 2 || sweep_state == 1){
     myServo.write(170); // Servo is set to initialize position and doesn't move
+    delay(1);
     temp = analogRead(servofeed);
     servo_pos = ((0.3956*temp)-75.165); // Converts feedback counts to angles.
     str_msg.data = servo_pos; // Servo position publishing. 0 degrees
@@ -101,10 +102,10 @@ void loop() {
       str_msg.data = servo_pos; // Servo position publishing
       servopos.publish( &str_msg);
   
-      delay(20); // Used to be 30
+      delay(40); // Used to be 30
       }
 
-    delay(100);
+    delay(150);
     // Repeats the previous lines from 165 to 15 degrees
     for(int i=start_pos;i<=175;i++) 
     {  
@@ -126,14 +127,14 @@ void loop() {
       str_msg.data = servo_pos; // Servo position publishing
       servopos.publish( &str_msg);
   
-      delay(20); // Used to be 30
+      delay(40); // Used to be 30
       }
-    //delay(5000); // Stops the servo before turning the other way
+    delay(150); // Stops the servo before turning the other way
   }
   //delay(5000);
   //echo_state.publish( &echo_msg);
   //nh.spinOnce();
-  delay(1);
+  //delay(1);
 
 }
 
