@@ -39,12 +39,14 @@ class RadarDisplay():
         self.sy = 700 # length of screen
         self.count = 0
         self.count2 = 0
+        #self.count_for_array_size = 0 # This will be used to create the size of the arry in the nav code for raw dat points
         self.count_data = 0 # Used to determine number of data points from sensors
         self.real_obj_dist = 0
         self.Transition = 0
         self.stop = False # Value to make robot stop
         self.estimated_obj_dist = 0
         self.servo_pos = 0
+        self.new_servo_pos = 0 # Manually calculates servo position instead of taking info from micro servo
         self.angle = 0
         self.pos = 2
         self.green = (0,200,0) # color
@@ -117,13 +119,17 @@ class RadarDisplay():
             #  self.scan_once_to_herc = 0
 
           while (self.scan_once_to_herc == 0 or self.scan_once_from_herc == 1): # Radar is scanning and robot is NOT moving
-                for i in range(4096): # 4096 (Used to be this value) and then 2048, now 1024. covers entire circle and is how many times radius line is drawn
+                #self.count_for_array_size = self.count_for_array_size + 1
+                for i in range(1024): # 4096 (Used to be this value) and then 2048, now 1024. covers entire circle and is how many times radius line is drawn
                    self.pub_stop_button_state() # Publishes state information about stop button. Continous "False" when it is not pressed and continous "True" when presses
                    self.pub_scan_once_state() # Publishes 0 continous when radar is still scanning, Publishes 1 continous when its done
                    #self.angle = i * (2 * math.pi)/72 #  Radar sweep line is incremented by 0.08 degrees (6.283 is 2 pi). Originally divided by 72
-                   self.angle = i * (1080)/4096 # This is in degrees: Used to be 360/2048 = .175, then it was 360/1024=.3516. Now its 360/1000=.36
+                   self.angle = i * 360/1024#(1080)/4096 # This is in degrees: Used to be 360/2048 = .175, then it was 360/1024=.3516. Now its 360/1000=.36
                    # If we divided by 52 it takes 8.6 seconds to sweep from 0 to 180 degrees. 42 takes 6.7. 32 takes 5.2. 22 takes 3.43
-                   if self.count == 4096: # Use to be 4096, then 2048, now
+                   radar_display_angle = self.angle
+                   if 181 <= radar_display_angle <= 360:
+                       radar_display_angle = 180 - (self.angle - 180)
+                   if self.count == 1024: # Use to be 4096, then 2048, now
                        self.count = 0
                        self.scan_once_to_herc = 1 # To make radar display stop sweeping
                        self.Transition = 1
@@ -133,7 +139,7 @@ class RadarDisplay():
                        #self.scan_once_display = False
                    self.count = self.count + 1
 
-                   if i%8==0: # Used to be 8 pygame draws, now its 6print
+                   if i%6==0: # Used to be 8 pygame draws, now its 6print. Only goes into here hen i=0,8,16, etc.
                       pygame.draw.circle(screen, self.green, (self.sx/self.pos, self.sy/self.pos), (self.sx/2) - (self.sx/10), 1) # Outer circle
                       pygame.draw.circle(screen, self.green, (self.sx/self.pos, self.sy/self.pos), (self.sx/10), 1) #Inner circle. radius was sx/pos/5*1
                       pygame.draw.circle(screen, self.green, (self.sx/self.pos, self.sy/self.pos), (self.sx/5), 1) # 2nd Inner circle. radius was sx/pos/5*2
@@ -146,15 +152,17 @@ class RadarDisplay():
                       self.stop = stop_button(self.sx,self.sy,self.stop,self.brightred,self.red) # Stop Button Feature
                       labels(self.sx,self.sy,self.real_obj_dist)
                       arc_inc(self.sx,self.sy)
-                      range_to_string(self.sx,self.sy,self.real_obj_dist,self.servo_pos)
+                      #range_to_string(self.sx,self.sy,self.real_obj_dist,self.servo_pos)
+                      range_to_string(self.sx,self.sy,self.real_obj_dist,radar_display_angle)
                       linesections(self.sx,self.sy,self.green)
 
-                      if 0 <= self.count <= 2048: #Used to be up to 1024, now 900
+                      if 0 <= self.count <= 512: #Used to be up to 1024, now 900
                          #dx = self.sx/2 - self.sx/2 * math.cos(math.radians(self.angle)) # Starts from left side
                          for j in range(512): # 512 is the number of radar points drawn for entire circle. Used to be 512, then 256, now 512 again
                              #deg = j * 5.625 / 8 # Increments by 0.703125 degrees. Used to be 5.625/8, then it was 4.21875/6, try 2.8125/4
-                             deg =  j * 5.625/8
-                             radar_deg = deg - self.angle # For first iteration we have 0.7 - 0.08 = 0.62 degrees. at j=206 we get 144.84 - 180
+                             deg =  j * 5.625/12
+                             radar_deg = deg - self.angle # at i=8 , we get self.angle = 2.109, where
+                             # For first iteration we have 0.7 - 0.08 = 0.62 degrees. at j=206 we get 144.84 - 180
                              if radar_deg <=0 :
                                 col = int(255*((360+radar_deg)/360)**1.3) # col is color. Color. Used to be **1.3. this one darkens
                                 pygame.draw.circle(screen, (0,col,0),(Rrx[j-1],Rry[j-1]),5) # Plots previous point data
@@ -182,31 +190,31 @@ class RadarDisplay():
                          # Could also use pygame.time.delay() instead of time.wait
                          screen.fill((0, 20, 0, 0))
 
-                      elif 2048 < self.count <= 4096: #Used to be from 1024 to 2048
+                      elif 512 < self.count <= 1024: #Used to be from 1024 to 2048
                          #dx = self.sx/2 - self.sx/2 * math.cos(math.radians(self.angle)) # Starts from right side
                          for j in range(512): # 512 is the number of radar points drawn for entire circle. Used to be 512, then 256, now 512 again
                              #deg = j * 5.625 / 8 # Increments by 0.703125 degrees. Used to be 5.625/8, then it was 4.21875/6, try 2.8125/4
-                             deg =  j * 5.625/8
-                             radar_deg = deg - self.angle # For first iteration we have 0.7 - 0.08 = 0.62 degrees. at j=206 we get 144.84 - 180
-                             if radar_deg <=0 :
-                                col = int(255*(abs(radar_deg)/360)**1.6) # This one brightens
+                             deg =  j * 5.625/12
+                             radar_deg = (deg- self.angle) #- self.angle # For first iteration we have 0.7 - 0.08 = 0.62 degrees. at j=206 we get 144.84 - 180
+                             if radar_deg >=0 :
+                                col = int(255*(radar_deg/360)**1.6) # This one brightens
                                 pygame.draw.circle(screen, (0,col,0),(Rrx[j-1],Rry[j-1]),5) # Plots previous point data
-                              #   col = int(255*((360-radar_deg)/360)**1.6) # col is color. Color. Used to be **1.3. this one darkens
-                              #   pygame.draw.circle(screen, (0,col,0),(Rrx[j-1],Rry[j-1]),5) # Plots previous point data
+                                # col = int(255*((360-radar_deg)/360)**1.6) # col is color. Color. Used to be **1.3. this one darkens
+                                # pygame.draw.circle(screen, (0,col,0),(Rrx[j-1],Rry[j-1]),5) # Plots previous point data
                              else:
-                                col = int(255*((abs(radar_deg))/360)**1.6) # col is color. Color. Used to be **1.3. this one darkens
+                                col = int(255*(abs(radar_deg)/360)**1.6) # col is color. Color. Used to be **1.3. this one darkens
                                 pygame.draw.circle(screen, (0,col,0),(Rrx[j-1],Rry[j-1]),5) # Plots previous point data
-                              #   col = int(255*(abs(radar_deg)/360)**1.6) # This one brightens
-                              #   pygame.draw.circle(screen, (0,col,0),(Rrx[j-1],Rry[j-1]),5) # Plots previous point data
+                                # col = int(255*(abs(radar_deg)/360)**1.6) # This one brightens
+                                # pygame.draw.circle(screen, (0,col,0),(Rrx[j-1],Rry[j-1]),5) # Plots previous point data
 
                          if self.estimated_obj_dist < 0: # If object distance is smaller than 100 cm
                              self.estimated_obj_dist = math.fabs(self.estimated_obj_dist) # Returns the absolute value of distance
                              pygame.display.get_surface().blit(textSurfstop, textRectstop)
-                         elif self.estimated_obj_dist > 8: # If object distance is greater than 100 cm. It gets plotted at origin. 8 is the radius of the big circle
+                         elif self.estimated_obj_dist > 5.4: # If object distance is greater than 100 cm. It gets plotted at origin. 8 is the radius of the big circle
                              self.estimated_obj_dist = 0
-                         x = self.sx/2 - (self.sx/2.5)* math.cos(math.radians(self.angle-180))
+                         x = self.sx/2 + (self.sx/2.5)* math.cos(math.radians(self.angle-180)) # Used to be self.sx - ()
                          #dy = self.sy/2 + self.sx/2 * math.sin(math.radians(self.angle)) # Starts from top side
-                         y = self.sy/2 + (self.sy/2.5) * math.sin(math.radians(self.angle))
+                         y = self.sy/2 + (self.sy/2.5) * math.sin(math.radians(self.angle)) # Used to be self.sy + ()
                         # anti aliasing line: To make line smooth
                          pygame.draw.aaline(screen, self.brightred, (self.sx/2, self.sy/2), (x, y),5) # Takes about 10 seconds to sweep 180 degrees. Used to be dx and dy
 
