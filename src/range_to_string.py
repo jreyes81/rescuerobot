@@ -21,6 +21,8 @@ def range_to_string(xpos,ypos,real_obj_dist,servo_pos):
     y_width = ypos * 0.100
     str_dist = str(real_obj_dist) # converting range integer to string
     str_pos = str(servo_pos) # Converting angle to string
+
+    #str_pos = str(new_servo_pos) # Converts angle integers to string. position is calculated instead of taking data from micro servo
     fontsize = int(xpos * 0.030)
 
     smalltext = pygame.font.Font("freesansbold.ttf",fontsize)
