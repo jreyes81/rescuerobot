@@ -44,6 +44,7 @@ class Navigation(object):
         self.go_to_sect6 = False # Used to tell if robot will navigate through sector 6
         self.state_of_radar = True
         # Based on micro sweep speed. We collect 460 points worth of data. Based on radar display sweep, we collecct 606 points of data, but will use 612
+        self.new_array = 0
         self.real_obj_dist_array = [0] *1500 # Will store data from ultrasound. Takes about 459-465 points worth of raw data for one complete sweep. Used to be 4101
         self.fake_obj_dist = 0 # Used to store data when we re done sweeping. It is a holder so we don't process it.
         self.sect1 = [0]*66 # Each sector is incremented by 20 degrees. Used to be 52
@@ -71,14 +72,14 @@ class Navigation(object):
 
     def scan_once_state_cb(self,data):
         self.scan_once_state = data.data # 0 is when radar is still sweeping. 1 is when radar has stopped sweeping
-        #if self.scan_once_state == 1: # For 2nd iterations and above when robot sweeps again
+        # if self.scan_once_state == 3: # For 2nd iterations and above when robot sweeps again
         #    self.count = 0 # Reseting count when radar scans again and we need to move again!
 
     def robot_state(self):
         #if self.scan_once_state == 2:
         #    self.count = 0
         while not rospy.is_shutdown():
-            while self.scan_once_state == 0: #and self.robot_on_standby == True: # Robot scanning and awaitng orders!
+            while self.scan_once_state == 0 or self.scan_once_state==3: #and self.robot_on_standby == True: # Robot scanning and awaitng orders!
                 print("Robot Scanning and Storing Data. Hercules on Standby!")
                 self.twist.linear.x = 0
                 self.twist.angular.z = 0
@@ -86,7 +87,7 @@ class Navigation(object):
                 self.scan_once_return = 1
                 self.pub_scan_once_return() # Returns a value of 1 to have radar know we received a 0 and we won't move
 
-            while self.scan_once_state == 1: #or self.scan_once_state == 2: # Robot dones scanning and ready to process data
+            while self.scan_once_state == 1 : #or self.scan_once_state == 2: # Robot dones scanning and ready to process data
                 self.done_processing_data = False
                 #self.scan_once_return = 2
                 #self.pub_scan_once_return() # Returns a value of 2 to let radar node we know it is done sweeping and we are going to move
@@ -104,6 +105,14 @@ class Navigation(object):
                 #print("Done Processing Data!")
                     self.move()
                     self.count = self.count + 1 # It takes about 5 seconds to get to a 300 count!
+
+            # while self.scan_once_state == 2: #and self.robot_on_standby == True: # Robot scanning and awaitng orders!
+            #     print("Robot Scanning and Storing Data. Hercules on Standby!")
+            #     self.twist.linear.x = 0
+            #     self.twist.angular.z = 0
+            #     self.cmd_pub.publish(self.twist)
+            #     self.scan_once_return = 3
+            #     self.pub_scan_once_return() # Returns a value of 1 to have radar know we received a 0 and we won't move
 
     def distcallback(self,data): # Takes in message "range" as input. Data comes back in cm. This part of code works well!
         if self.scan_once_state == 0: # As long as radar is sweeping, store data
@@ -125,6 +134,7 @@ class Navigation(object):
         self.stop = data.data
 
     def store_data_in_sectors(self):
+        self.new_array = [0]*self.store_count_obj
         for i in range(self.store_count_obj):
             self.new_array[i] = self.real_obj_dist_array[i] # Transferring data from the pre created array to a new size array.
             # This new array will contain all of the raw data
