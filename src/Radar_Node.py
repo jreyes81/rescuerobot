@@ -8,7 +8,7 @@
 # Cal State LA
 
 import rospy
-from pygame_radar_ver2 import RadarDisplay
+from pygame_radar_ver1 import RadarDisplay
 
 def Radar_Node():
     rospy.init_node("radar_display", anonymous=True)
