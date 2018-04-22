@@ -63,7 +63,7 @@ void setup() {
   nh.advertise(servopos);
   //nh.advertise(echo_state);
 
-  myServo.attach(5); // Defines on which pin is the servo motor attached
+  myServo.attach(10); // Defines on which pin is the servo motor attached
   myServo.write(170);// Initializes servo position to 0
 }
 
