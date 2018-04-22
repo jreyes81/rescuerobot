@@ -129,7 +129,7 @@ void loop() {
   
       delay(40); // Used to be 30
       }
-    delay(150); // Stops the servo before turning the other way
+    delay(8000); // Stops the servo before turning the other way. Used to be 150
   }
   //delay(5000);
   //echo_state.publish( &echo_msg);
