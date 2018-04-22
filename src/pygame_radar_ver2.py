@@ -138,6 +138,7 @@ class RadarDisplay():
                        self.count = 0
                        self.scan_once_to_herc = 1 # To make radar display stop sweeping
                        self.Transition = 1
+                       break
                        #self.pub_scan_once_state()
                        #self.scan_once_from_herc = 2
                        break # Break from the loop that is ploting
