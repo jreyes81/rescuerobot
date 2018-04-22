@@ -33,6 +33,7 @@ class Navigation(object):
         self.rate = rospy.Rate(60) # Pubslishing at 60 hz
         self.scan_once_state = []
         self.count_size_array = 0
+        self.state_count = 0
         self.sector_points = 0 # Number of sector points that sectors 4,5,and 6 will receive
         self.scan_once_return = 0 # Used to send state information back to radar display to scan again
         self.count = 0
@@ -40,7 +41,7 @@ class Navigation(object):
         self.robot_on_standby = True
         self.done_processing_data = False # Used to tell when robot will move when data is done being processed!
         self.go_to_sect4 = False # Used to tell if robot will navigate through sector 4
-        self.go_to_sect5 = False # Used to tell if robot will navigate through sector 5
+        self.go_to_sect5 = True # Used to tell if robot will navigate through sector 5
         self.go_to_sect6 = False # Used to tell if robot will navigate through sector 6
         self.state_of_radar = True
         # Based on micro sweep speed. We collect 460 points worth of data. Based on radar display sweep, we collecct 606 points of data, but will use 612
@@ -79,27 +80,36 @@ class Navigation(object):
         #if self.scan_once_state == 2:
         #    self.count = 0
         while not rospy.is_shutdown():
-            while self.scan_once_state == 0 or self.scan_once_state==3: #and self.robot_on_standby == True: # Robot scanning and awaitng orders!
+            while self.scan_once_state == 0: #and self.robot_on_standby == True: # Robot scanning and awaitng orders!
                 print("Robot Scanning and Storing Data. Hercules on Standby!")
                 self.twist.linear.x = 0
                 self.twist.angular.z = 0
-                self.cmd_pub.publish(self.twist)
                 self.scan_once_return = 1
+                self.cmd_pub.publish(self.twist)
+                # self.scan_once_return = 1
                 self.pub_scan_once_return() # Returns a value of 1 to have radar know we received a 0 and we won't move
 
             while self.scan_once_state == 1 : #or self.scan_once_state == 2: # Robot dones scanning and ready to process data
                 self.done_processing_data = False
+                self.go_to_sect5 =  True
+                self.state_count = self.state_count +1 # for first movement, it is 1
+                # self.go_to_sect4 = True
+                # self.go_to_sect6 = True
                 #self.scan_once_return = 2
                 #self.pub_scan_once_return() # Returns a value of 2 to let radar node we know it is done sweeping and we are going to move
                 print("Robot Stopped Scanning and Processing Data!")
+                self.count = 0
                 self.store_data_in_sectors() # Seperates the self.real_obj_dist_array into the 9 sectors to process data
                 print("Finished seperating data in sectors")
                 self.process_data()
                 print("Finished processing data!")
                 print(self.done_processing_data) # Should be "True"
                 print(self.robot_on_standby) # Should be "False"
+                print("State for sector 5:")
                 print(self.go_to_sect5) # If "True", we can move straight
+                print("State for sector 4:")
                 print(self.go_to_sect4) # If "True" there is no object in this sector
+                print("State for sector 6:")
                 print(self.go_to_sect6) # If "True" there is no object in this sector
                 if self.done_processing_data == True: # Robot has finished processing data and ready to send commands to motor controller to move!
                 #print("Done Processing Data!")
@@ -122,7 +132,7 @@ class Navigation(object):
             #print(self.store_count_obj) # To make sure count gets incremented
             real_obj_dist = data.range # Stores object distance (raw data) info into local variable
             self.real_obj_dist_array[self.store_count_obj] = real_obj_dist # Stores local variable into an array to process data
-            #print(self.real_obj_dist_array[1:self.store_count_obj]) # Should print the range of values according to the count
+            # print(self.real_obj_dist_array[1:self.store_count_obj]) # Should print the range of values according to the count
             #print(len(self.real_obj_dist_array)) # Prints the number of elements in the array. Useful to see how we can process raw data
             #print(self.real_obj_dist_array[self.store_count_obj])
             self.store_count_obj = self.store_count_obj + 1 # Increments to store next data we obtain as sensor sweeps
@@ -138,7 +148,7 @@ class Navigation(object):
         for i in range(self.store_count_obj):
             self.new_array[i] = self.real_obj_dist_array[i] # Transferring data from the pre created array to a new size array.
             # This new array will contain all of the raw data
-
+        print(self.new_array)  # Should print out the array containing all the raw data collected
         # example: Say self.new_array has 1368 data points. Split these int0 9 sectors
         numel_of_new_array = len(self.new_array) # Contains the number of elements in the array
 
@@ -230,13 +240,21 @@ class Navigation(object):
     def process_data(self):
         # We process and analyze the information stored in sectors 4,5 and 6
         # Based on stored distance information, we set information about the sectors and ir robot can navigate through them
+        print(self.sect5)
+        print(self.sect4)
+        print(self.sect6)
         for i in range(self.sector_points): # 152 points
-            if abs(self.sect5[i]) >= 1: # Checking to see if there is an object in sector 5 within 60 cm
-                self.go_to_sect5 = True # There is no object detected within the 60 cm threshold of sector 5
-            if abs(self.sect4[i]) >= 28: # Checking to see if there is an object in sector 4 within 60 cm
-                self.go_to_sect4 = True # There is no object detected within the 60 cm threshold of sector 4
-            if abs(self.sect6[i]) >= 28: # There is no object detected within the 60 cm threshold of sector 6
-                self.go_to_sect6 = True # There is no object detected within the 60 cm threshold of sector 5
+            if 0 < abs(self.sect5[i]) <= 38: # Checking to see if there is an object in sector 5 within 60 cm
+                self.go_to_sect5 = False # There is an object detected within the 60 cm threshold of sector 5
+                self.go_to_sect6 = True # Possibility of going through sector 6
+                self.go_to_sect4 = True # Possibility of going through sector 4
+            if 0 < abs(self.sect4[i]) <= 38: # Checking to see if there is an object in sector 4 within 60 cm
+                self.go_to_sect4 = False # There is an object detected within the 60 cm threshold of sector 4. We will go
+            if 0 < abs(self.sect6[i]) <= 38: # There is no object detected within the 60 cm threshold of sector 6
+                self.go_to_sect6 = False # There is no object detected within the 60 cm threshold of sector 5
+
+        if self.go_to_sect6 == True:
+            self.go_to_sect4 =  False # We only want to navigate through one sector
 
         # for i in range(self.store_count_obj):
         #     if abs(self.new_array[i]) >= 0:
@@ -274,6 +292,8 @@ class Navigation(object):
                             self.twist.angular.z = 0
                             self.scan_once_return = 1
                             self.cmd_pub.publish(self.twist)
+                            self.go_to_sect4 =  False
+                            self.go_to_sect6 =  False
                             #self.count = 0 # Count variable reset so it can be reused
                             self.pub_scan_once_return() # Returns a value of 2 to have radar sweep again
 
