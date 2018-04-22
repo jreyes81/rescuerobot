@@ -55,7 +55,7 @@ float to_stop = 0;
 
 void straight() // Function to make robot go straight
 {
-    analogWrite(ENA, 150); // This sets the speed of the left motor
+    analogWrite(ENA, 200); // This sets the speed of the left motor
     analogWrite(ENB, 200); // This sets the speed of the right motor
     digitalWrite(IN2, HIGH);
     digitalWrite(IN4, HIGH);  // Might need to put a delay to make robot go forwards for a few seconds

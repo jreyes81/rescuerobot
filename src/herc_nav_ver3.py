@@ -252,7 +252,7 @@ class Navigation(object):
         # sect4data = rospy.loginfo(self.sect4)
         # sect6data = rospy.loginfo(self.sect6)
         for i in range(self.sector_points): # 152 points
-            if 0 < abs(self.sect5[i]) <= 38: # Checking to see if there is an object in sector 5 within 60 cm
+            if 0 < abs(self.sect5[i]) <= 68: # Checking to see if there is an object in sector 5 within 60 cm
                 self.go_to_sect5 = False # There is an object detected within the 60 cm threshold of sector 5
                 self.go_to_sect6 = True # Possibility of going through sector 6
                 self.go_to_sect4 = True # Possibility of going through sector 4
@@ -290,7 +290,7 @@ class Navigation(object):
                     # Op Mode 1: Go Straight : Object is detected past 60 cm and stop button hasnt been pressed
                     if self.stop == False and self.go_to_sect5 == True: # Stopp button has not been pressed and there is no object in front of robot
                         print('Hercules Going Forward!')
-                        if self.count < 250: # 300 counts is about 5 seconds. 150 counts is about 2.5 seconds
+                        if self.count < 50: # 300 counts is about 5 seconds. 150 counts is about 2.5 seconds
                             self.twist.linear.x = 20 # Robot moves forward
                             self.twist.angular.z = 0 # Robot does not rotate
                             self.twist.linear.z = 0
@@ -300,7 +300,7 @@ class Navigation(object):
                             # self.count = self.count+1
                             self.cmd_pub.publish(self.twist) # Publishes
                             self.pub_scan_once_return()
-                        if self.count >= 150:
+                        if self.count >= 50:
                             print("Hercules has stopped")
                             self.twist.linear.x = 0 # Robot stops
                             self.twist.angular.z = 0
@@ -315,25 +315,25 @@ class Navigation(object):
                     # Op Mode 2: Navigate Right Side Around Object : Object is within 60 cm and stop button hasn't been pressed
                     if self.stop == False and self.go_to_sect6 == True:#self.go_to_sect5 == False and self.go_to_sect6 == True:
                         print('Hercules Going Right!')
-                        if self.count < 150: # It takes about 5 seconds to get to a 300 count!
+                        if self.count < 50: # It takes about 5 seconds to get to a 300 count!
                             self.twist.linear.x = 0 # Robot steers right first
                             self.twist.angular.z = 20
                             self.scan_once_return = 2 # We will publish this value to have radar know we are still moving
                             self.cmd_pub.publish(self.twist)
                             self.pub_scan_once_return()
-                        if 150 < self.count < 300: # From 150 to 300 is about 2.5 seconds
-                            self.twist.linear.x = 0
-                            self.twist.angular.z = -20 # Robot steers left second
-                            self.scan_once_return = 2 # We will publish this value to have radar know we are still moving
-                            self.pub_scan_once_return()
-                            self.cmd_pub.publish(self.twist)
-                        if 300 <= self.count < 450: # From 300 to 450 is about 2.5 seconds
+                      #  if 150 < self.count < 300: # From 150 to 300 is about 2.5 seconds
+                      #      self.twist.linear.x = 0
+                      #      self.twist.angular.z = -20 # Robot steers left second
+                      #      self.scan_once_return = 2 # We will publish this value to have radar know we are still moving
+                      #      self.pub_scan_once_return()
+                      #      self.cmd_pub.publish(self.twist)  
+                        if  50 <= self.count < 100: # From 300 to 450 is about 2.5 seconds
                             self.twist.linear.x = 20
                             self.twist.angular.z = 0 # Robot then goes straight
                             self.scan_once_return = 2 # Robot is still moving
                             self.cmd_pub.publish(self.twist)
                             self.pub_scan_once_return()
-                        if self.count >= 450:
+                        if self.count >= 100:
                             self.twist.linear.x = 0
                             self.twist.angular.z = 0 # Robot then stops after a few seconds
                             self.scan_once_return = 1 # We will publish this value to have radar sweep again after we are done moving
@@ -344,25 +344,25 @@ class Navigation(object):
                     # Op Mode 3: Navigate Left Side Around Object : Object is within 60 cm and stop button hasn't been pressed
                     if self.stop == False and self.go_to_sect4 == True:#self.go_to_sect5 == False and self.go_to_sect4 == True:
                         print('Hercules Going Left!')
-                        if self.count < 150: # About 2.5 second travel time
+                        if self.count < 50: # About 2.5 second travel time
                             self.twist.linear.x = 0
                             self.twist.angular.z = -20 # Robot goes left first!
                             self.scan_once_return = 2 # Robot is still moving
                             self.cmd_pub.publish(self.twist)
                             self.pub_scan_once_return()
-                        if 150 <= self.count < 300: # From 150 to 300 is about 2.5 seconds
-                            self.twist.linear.x = 0
-                            self.twist.angular.z = 20 # Robot steers right second
-                            self.scan_once_return = 2 # Robot is still moving
-                            self.cmd_pub.publish(self.twist)
-                            self.pub_scan_once_return()
-                        if 300 <= self.count < 450: # From 300 to 450 is about 2.5 seconds
+                          # if 150 <= self.count < 300: # From 150 to 300 is about 2.5 seconds
+                          # self.twist.linear.x = 0
+                          # self.twist.angular.z = 20 # Robot steers right second
+                          # self.scan_once_return = 2 # Robot is still moving
+                          # self.cmd_pub.publish(self.twist)
+                          # self.pub_scan_once_return() 
+                        if 50 <= self.count < 100: # From 300 to 450 is about 2.5 seconds
                             self.twist.linear.x = 20
                             self.twist.angular.z = 0 # Robot then goes straight
                             self.scan_once_return = 2 # Robot is still moving
                             self.cmd_pub.publish(self.twist)
                             self.pub_scan_once_return()
-                        if self.count >= 450:
+                        if self.count >= 100:
                             self.twist.linear.x = 0
                             self.twist.angular.z = 0 # Robot then stops after a few seconds
                             self.scan_once_return = 1 # Robot stops
