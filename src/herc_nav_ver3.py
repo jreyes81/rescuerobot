@@ -80,6 +80,9 @@ class Navigation(object):
         while not rospy.is_shutdown():
             while self.scan_once_state == 0: #and self.robot_on_standby == True: # Robot scanning and awaitng orders!
                 print("Robot Scanning and Storing Data. Hercules on Standby!")
+                self.go_to_sect5 = True # Reseting the boolean values for robot to travel through
+                self.go_to_sect4 = False
+                self.go_to_sect6 = False
                 self.twist.linear.x = 0
                 self.twist.angular.z = 0
                 self.scan_once_return = 1
@@ -89,7 +92,7 @@ class Navigation(object):
 
             while self.scan_once_state == 1 : #or self.scan_once_state == 2: # Robot dones scanning and ready to process data
                 self.done_processing_data = False
-                self.go_to_sect5 =  True
+                # self.go_to_sect5 =  True
                 self.state_count = self.state_count +1 # for first movement, it is 1
                 # self.go_to_sect4 = True
                 # self.go_to_sect6 = True
@@ -236,6 +239,9 @@ class Navigation(object):
         print(self.sect5)
         print(self.sect4)
         print(self.sect6)
+        sect5data = rospy.loginfo(self.sect5)
+        # sect4data = rospy.loginfo(self.sect4)
+        # sect6data = rospy.loginfo(self.sect6)
         for i in range(self.sector_points): # 152 points
             if 0 < abs(self.sect5[i]) <= 38: # Checking to see if there is an object in sector 5 within 60 cm
                 self.go_to_sect5 = False # There is an object detected within the 60 cm threshold of sector 5
@@ -249,6 +255,8 @@ class Navigation(object):
         if self.go_to_sect6 == True:
             self.go_to_sect4 =  False # We only want to navigate through one sector
 
+        # rospy.loginfo(self.go_to_sect4)
+        rospy.loginfo(self.go_to_sect5)
         # for i in range(self.store_count_obj):
         #     if abs(self.new_array[i]) >= 0:
         #         self.go_to_sect5 = True
@@ -278,6 +286,7 @@ class Navigation(object):
                             self.twist.angular.z = 0 # Robot does not rotate
                             self.twist.linear.z = 0
                             self.scan_once_return = 2 # We will publish this value to have radar know we are still moving
+                            rospy.loginfo(self.count)
                             self.cmd_pub.publish(self.twist) # Publishes
                             self.pub_scan_once_return()
                         if self.count >= 150:
