@@ -73,6 +73,11 @@ class Navigation(object):
 
     def scan_once_state_cb(self,data):
         self.scan_once_state = data.data # 0 is when radar is still sweeping. 1 is when radar has stopped sweeping
+    #
+    # def count_for_move(self):
+    #     if self.scan_once_state == 0:
+    #         self.count = 0
+    #     self.count = self.count+1
 
     def robot_state(self):
         #if self.scan_once_state == 2:
@@ -86,6 +91,7 @@ class Navigation(object):
                 self.twist.linear.x = 0
                 self.twist.angular.z = 0
                 self.scan_once_return = 1
+                self.count = 0
                 self.cmd_pub.publish(self.twist)
                 # self.scan_once_return = 1
                 self.pub_scan_once_return() # Returns a value of 1 to have radar know we received a 0 and we won't move
@@ -99,7 +105,9 @@ class Navigation(object):
                 #self.scan_once_return = 2
                 #self.pub_scan_once_return() # Returns a value of 2 to let radar node we know it is done sweeping and we are going to move
                 print("Robot Stopped Scanning and Processing Data!")
-                self.count+1
+                rospy.loginfo(self.store_count_obj)
+                self.count = self.count+1
+                print(self.count)
                 self.store_data_in_sectors() # Seperates the self.real_obj_dist_array into the 9 sectors to process data
                 print("Finished seperating data in sectors")
                 self.process_data()
@@ -115,7 +123,7 @@ class Navigation(object):
                 if self.done_processing_data == True: # Robot has finished processing data and ready to send commands to motor controller to move!
                 #print("Done Processing Data!")
                     self.move()
-                    print(self.count)
+                    # print(self.count)
                     # self.count = self.count + 1 # It takes about 5 seconds to get to a 300 count!
                     # print(self.count)
 
@@ -140,6 +148,7 @@ class Navigation(object):
         self.stop = data.data
 
     def store_data_in_sectors(self):
+
         self.new_array = [0]*self.store_count_obj
         for i in range(self.store_count_obj):
             self.new_array[i] = self.real_obj_dist_array[i] # Transferring data from the pre created array to a new size array.
@@ -281,21 +290,25 @@ class Navigation(object):
                     # Op Mode 1: Go Straight : Object is detected past 60 cm and stop button hasnt been pressed
                     if self.stop == False and self.go_to_sect5 == True: # Stopp button has not been pressed and there is no object in front of robot
                         print('Hercules Going Forward!')
-                        if self.count < 150: # 300 counts is about 5 seconds. 150 counts is about 2.5 seconds
+                        if self.count < 250: # 300 counts is about 5 seconds. 150 counts is about 2.5 seconds
                             self.twist.linear.x = 20 # Robot moves forward
                             self.twist.angular.z = 0 # Robot does not rotate
                             self.twist.linear.z = 0
                             self.scan_once_return = 2 # We will publish this value to have radar know we are still moving
-                            rospy.loginfo(self.count)
+                            # rospy.loginfo(self.count)
+                            print(self.count)
+                            # self.count = self.count+1
                             self.cmd_pub.publish(self.twist) # Publishes
                             self.pub_scan_once_return()
                         if self.count >= 150:
+                            print("Hercules has stopped")
                             self.twist.linear.x = 0 # Robot stops
                             self.twist.angular.z = 0
                             self.scan_once_return = 1
                             self.cmd_pub.publish(self.twist)
                             self.go_to_sect4 =  False
                             self.go_to_sect6 =  False
+                            # self.store_count_obj = 0
                             #self.count = 0 # Count variable reset so it can be reused
                             self.pub_scan_once_return() # Returns a value of 2 to have radar sweep again
 
