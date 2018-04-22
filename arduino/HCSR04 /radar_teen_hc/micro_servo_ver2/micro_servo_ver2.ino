@@ -76,7 +76,7 @@ void radar_swp_cb( const std_msgs::Float32& state_msg){ //Used to be Float32
       //servopos.publish( &str_msg);
       delay(20); // Used to be 30
       }
-      delay(100);
+      delay(8000); // Used to be 100
     }
 
   if (sweep_state == 1) // Radar not sweeping and robot moving
