@@ -58,7 +58,7 @@ void radar_swp_cb( const std_msgs::Float32& state_msg){ //Used to be Float32
       servo_pos = ((0.3956*temp)-75.165);
       //str_msg.data = servo_pos; // Servo position publishing
       //servopos.publish( &str_msg);
-      delay(85); // Used to be 30 then 20 then 45
+      delay(35); // Used to be 30 then 20 then 45
       }
       delay(100); // Stoping before rotating other way!
      for(int i=start_pos;i<=175;i++)
@@ -74,7 +74,7 @@ void radar_swp_cb( const std_msgs::Float32& state_msg){ //Used to be Float32
       servo_pos = ((0.3956*temp)-75.165);
       //str_msg.data = servo_pos; // Servo position publishing
       //servopos.publish( &str_msg);
-      delay(85); // Used to be 30 then 20 then 45
+      delay(35); // Used to be 30 then 20 then 45
       }
       delay(46000); // Used to be 100 then 8000
     }
