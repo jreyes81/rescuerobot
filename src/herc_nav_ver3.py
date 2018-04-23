@@ -92,6 +92,18 @@ class Navigation(object):
                 self.twist.angular.z = 0
                 self.scan_once_return = 1
                 self.count = 0
+                # self.count_size_array = 0
+                # self.new_array = 0
+                # self.store_count_obj = 0
+                # self.sect1 = 0
+                # self.sect2 = 0
+                # self.sect3 = 0
+                # self.sect4 = 0
+                # self.sect5 = 0
+                # self.sect6 = 0
+                # self.sect7 = 0
+                # self.sect8 = 0
+                # self.sect9 = 0
                 self.cmd_pub.publish(self.twist)
                 # self.scan_once_return = 1
                 self.pub_scan_once_return() # Returns a value of 1 to have radar know we received a 0 and we won't move
@@ -256,9 +268,9 @@ class Navigation(object):
                 self.go_to_sect5 = False # There is an object detected within the 60 cm threshold of sector 5
                 self.go_to_sect6 = True # Possibility of going through sector 6
                 self.go_to_sect4 = True # Possibility of going through sector 4
-            if 0 < abs(self.sect4[i]) <= 38: # Checking to see if there is an object in sector 4 within 60 cm
+            if 0 < abs(self.sect4[i]) <= 68: # Checking to see if there is an object in sector 4 within 60 cm
                 self.go_to_sect4 = False # There is an object detected within the 60 cm threshold of sector 4. We will go
-            if 0 < abs(self.sect6[i]) <= 38: # There is no object detected within the 60 cm threshold of sector 6
+            if 0 < abs(self.sect6[i]) <= 68: # There is no object detected within the 60 cm threshold of sector 6
                 self.go_to_sect6 = False # There is no object detected within the 60 cm threshold of sector 5
 
         if self.go_to_sect6 == True:
@@ -308,6 +320,7 @@ class Navigation(object):
                             self.cmd_pub.publish(self.twist)
                             self.go_to_sect4 =  False
                             self.go_to_sect6 =  False
+                            
                             # self.store_count_obj = 0
                             #self.count = 0 # Count variable reset so it can be reused
                             self.pub_scan_once_return() # Returns a value of 2 to have radar sweep again
@@ -326,7 +339,7 @@ class Navigation(object):
                       #      self.twist.angular.z = -20 # Robot steers left second
                       #      self.scan_once_return = 2 # We will publish this value to have radar know we are still moving
                       #      self.pub_scan_once_return()
-                      #      self.cmd_pub.publish(self.twist)  
+                      #      self.cmd_pub.publish(self.twist)
                         if  50 <= self.count < 100: # From 300 to 450 is about 2.5 seconds
                             self.twist.linear.x = 20
                             self.twist.angular.z = 0 # Robot then goes straight
@@ -355,7 +368,7 @@ class Navigation(object):
                           # self.twist.angular.z = 20 # Robot steers right second
                           # self.scan_once_return = 2 # Robot is still moving
                           # self.cmd_pub.publish(self.twist)
-                          # self.pub_scan_once_return() 
+                          # self.pub_scan_once_return()
                         if 50 <= self.count < 100: # From 300 to 450 is about 2.5 seconds
                             self.twist.linear.x = 20
                             self.twist.angular.z = 0 # Robot then goes straight
