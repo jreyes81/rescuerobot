@@ -1,0 +1,13 @@
+<launch>
+
+
+
+  <!-- Launches the Radar display -->
+  <node pkg="rescuerobot" type = "Radar_Node.py" name="radar_display_node">
+  </node>
+
+
+<!-- Launches the Navigation Node >
+  <node p8 0 0 base_link USFL1" / -->
+
+</launch>

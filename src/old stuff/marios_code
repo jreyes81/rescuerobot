@@ -1,0 +1,91 @@
+// Ping Code Adopted From: https://bitbucket.org/teckel12/arduino-new-ping/wiki/Home#!single-pin-sketch
+#include <NewPing.h>
+#include <Servo.h>
+
+#define PING_PIN 11  // Arduino pin tied to both trigger and echo pins
+  //on the ultrasonic sensor.
+#define PING_MAX_DISTANCE 200 // Maximum distance we want to ping for
+  //(in centimeters). Maximum sensor distance is rated at 400-500cm.
+
+NewPing sonar(PING_PIN, PING_PIN, PING_MAX_DISTANCE); // NewPing setup of pin
+  //and maximum distance.
+Servo myservo;  // create servo object to control a servo
+// twelve servo objects can be created on most boards
+
+int pos = 0;    // variable to store the servo position
+// connect motor controller pins to Arduino digital pins
+//motor one
+int ENA = 5;
+int IN1 = 6;
+int IN2 = 7;
+//motor two
+int ENB = 10;
+int IN3 = 8;
+int IN4 = 9;
+
+void setup() {
+  myservo.attach(3);  // attaches the servo on pin 3 to the servo object
+  // set all the motor control pins to outputs
+  pinMode(ENA, OUTPUT);
+  pinMode(ENB, OUTPUT);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);  
+  Serial.begin(9600);
+}
+
+void car_forward() {
+  // this function will run the motors in both directions at a fixed speed
+  // turn on motor A
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  // set speed to 100 out of possible range 0~255
+  analogWrite(ENA, 100);
+  // turn on motor B
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+  // set speed to 100 out of possible range 0~255
+  analogWrite(ENB, 100);
+  //delay(2000);
+}
+
+void car_stop() {
+  // this function will stop the motors 
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);  
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+}
+
+void loop() { 
+  
+  delay(500);  // Wait 500ms between pings (about 20 pings/sec). 29ms 
+  //should be the shortest delay between pings.
+unsigned int distanceInCms = sonar.ping_cm(); // Send a ping, returns the distance
+  //in centimeters or 0 (zero) if no ping echo within set distance limit
+unsigned int distanceInInches = sonar.ping_in(); //  Send a ping, returns the distance
+  //in inches or 0 (zero) if no ping echo within set distance limit 
+  Serial.println("Distance: " + String(distanceInCms) + "cm");
+  Serial.println("Distance: " + String(distanceInInches) + "in \n");
+  if( distanceInCms > 10) car_forward();
+
+  for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
+    // in steps of 1 degree
+    myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+  }
+
+  distanceInCms = sonar.ping_cm(); // Send a ping, returns the distance
+  distanceInInches = sonar.ping_in(); //  Send a ping, returns the distanceSerial.println("Distance: " + String(distanceInCms) + "cm");
+  Serial.println("Distance: " + String(distanceInCms) + "cm");
+  Serial.println("Distance: " + String(distanceInInches) + "in \n");
+    if( distanceInCms > 10) car_forward();
+    if( distanceInCms < 10) car_stop();
+
+
+  for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
+    myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+  }
+}
